@@ -5,15 +5,20 @@ import org.xml.sax.InputSource;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
-import java.io.ByteArrayInputStream;
-import java.io.StringWriter;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
+import java.net.URI;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -22,14 +27,6 @@ import java.util.Optional;
 @XmlRootElement(name = "NoteSection")
 public class NoteSection {
     NoteSection() {
-        init();
-    }
-
-    public NoteSection(Path noteBookFile) {
-
-    }
-
-    private static void init() {
         this.UUID = java.util.UUID.randomUUID().toString();
         this.modified=this.created=System.currentTimeMillis();
         this.content=null;
@@ -96,28 +93,53 @@ public class NoteSection {
         return result ;
     }
 
-    public static Optional<NoteSection> fromUTF8ByteArray(byte[] utf8Array) {
-        InputSource source = new InputSource();
-        source.setEncoding("UTF-8");
-        source.setByteStream(new ByteArrayInputStream(utf8Array));
-        return fromInputSource(source);
+    public void save() throws IOException {
+        final URI uri = URI.create("jar:file:" + path);
+        final Map<String, String> env = new HashMap<>();
+        if (!Files.exists(path)) {
+            env.put("create", "true");
+        }
+        try (FileSystem fileSystem = FileSystems.newFileSystem(uri, env)) {
+            Path path = fileSystem.getPath("notesection.xml");
+            if (Files.exists(path)) Files.delete(path);
+            final Marshaller marshaller = jaxbContext.createMarshaller();
+            try (OutputStream os = Files.newOutputStream(path)) {
+                marshaller.marshal(this, os);
+            }
+        } catch(JAXBException e) {
+            throw new IOException("unable to marshall note section",e);
+        }
+
     }
 
-    /**
-     * @param noteSection : the string buffer which contains the expected note section
-     * @return note section constructed from provided string
-     */
-    public static Optional<NoteSection> fromString(String noteSection) {
-        Optional<NoteSection> result = Optional.empty();
-        InputSource source = new InputSource();
-        source.setEncoding("UTF-8");
-        try {
-            source.setByteStream(new ByteArrayInputStream(noteSection.getBytes("UTF-8")));
-            result = fromInputSource(source);
-        }catch(UnsupportedEncodingException e) {
-            logger.error("unable to unmarshal string content",e);
+
+    public static NoteSection fromZipFile(Path zipFile) throws IllegalArgumentException {
+        NoteSection result = new NoteSection();
+        if (Files.exists(zipFile)) {
+            final URI uri = URI.create("jar:file:" + zipFile);
+            final Map<String, String> env = new HashMap<>();
+            try (FileSystem fileSystem = FileSystems.newFileSystem(uri, env)) {
+                Path path = fileSystem.getPath("notesection.xml");
+                if (!Files.exists(path)) throw new IllegalArgumentException("zip does not contain expected file");
+                InputSource source = new InputSource();
+                try (InputStream is = Files.newInputStream(path)){
+                    source.setByteStream(is);
+                    source.setEncoding("UTF-8");
+                    Optional<NoteSection> opt = fromInputSource(source);
+                    if (opt.isPresent()) result = opt.get();
+                }
+
+            } catch (IOException e) {
+                logger.error("error reading zip", e);
+            }
         }
+        result.path = zipFile;
         return result;
+    }
+
+    @XmlTransient
+    public Path getPath() {
+        return path;
     }
 
     @Override
@@ -143,10 +165,19 @@ public class NoteSection {
         return result;
     }
 
+    @XmlTransient
+    public String getName() {
+        String fileName = path.getFileName().toString();
+        int i = fileName.indexOf(".");
+        if (i==-1) return fileName;
+        else return fileName.substring(0,i);
+    }
+
     private long   modified ;
     private long   created  ;
     private String content  ;
     private String UUID     ;
+    private Path   path     ;
 
     private static final JAXBContext jaxbContext ;
     private static final Logger logger = Logger.getLogger(NoteSection.class);

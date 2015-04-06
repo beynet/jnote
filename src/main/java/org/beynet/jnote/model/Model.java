@@ -10,15 +10,18 @@ import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Observable;
 
 /**
  * Created by beynet on 06/04/2015.
  */
-public class Model implements FileVisitor<Path>{
+public class Model extends Observable implements FileVisitor<Path> {
     public Model(Path rootDir) {
         this.rootDir = rootDir;
         loadNoteBooks();
     }
+
+
 
     private void loadNoteBooks() {
         noteBooks=new ArrayList<>();
@@ -30,17 +33,16 @@ public class Model implements FileVisitor<Path>{
         }
     }
 
-    private Path rootDir ;
-    private long depth ;
-    private List<NoteBook> noteBooks = new ArrayList<>();
-    private NoteBook currentNoteBook ;
+    public List<NoteBook> getNoteBooks() {
+        return noteBooks;
+    }
 
     @Override
     public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
         if (depth<1) {
             depth++;
             if (depth==1) {
-                currentNoteBook = new NoteBook(dir.getFileName().toString());
+                currentNoteBook = new NoteBook(dir);
                 noteBooks.add(currentNoteBook);
             }
             return FileVisitResult.CONTINUE;
@@ -52,7 +54,7 @@ public class Model implements FileVisitor<Path>{
     public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
         if (depth==1) {
             if (file.getFileName().toString().endsWith(".zip")) {
-                currentNoteBook.addNoteSection(file);
+                currentNoteBook.addSection(file.getFileName());
             }
         }
         return FileVisitResult.CONTINUE;
@@ -70,5 +72,9 @@ public class Model implements FileVisitor<Path>{
     }
 
 
+    private Path rootDir ;
+    private long depth ;
+    private List<NoteBook> noteBooks = new ArrayList<>();
+    private NoteBook currentNoteBook ;
     private final static Logger logger = Logger.getLogger(Model.class);
 }
