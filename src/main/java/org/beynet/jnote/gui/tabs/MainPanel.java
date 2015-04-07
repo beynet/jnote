@@ -43,7 +43,7 @@ public class MainPanel extends VBox implements Observer,ModelEventVisitor{
     }
 
     @Override
-    public void visit(SectionModifiedOrCreated event) {
+    public void visit(NoteSectionAdded event) {
         // NOTHING TO DO
     }
 
@@ -62,6 +62,11 @@ public class MainPanel extends VBox implements Observer,ModelEventVisitor{
     @Override
     public void visit(OnExitEvent onExitEvent) {
         notes.visit(onExitEvent);
+    }
+
+    @Override
+    public void visit(NoteAdded noteAdded) {
+
     }
 
     private ObservableList<NoteBookRef> noteBooksList ;

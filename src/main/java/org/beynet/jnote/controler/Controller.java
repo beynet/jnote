@@ -20,12 +20,20 @@ public class Controller {
     public static void unSubscribeToNoteBook(NoteBookRef noteBook,Observer observer) {
         Model.getInstance().unSubscribeToNoteBook(noteBook.getUUID(), observer);
     }
+
+    public static void subscribeToNoteSection(NoteSectionRef noteSectionRef,Observer observer) {
+        Model.getInstance().subscribeToNoteSection(noteSectionRef.getNoteBookRef().getUUID(), noteSectionRef.getUUID(), observer);
+    }
+    public static void unSubscribeToNoteSection(NoteSectionRef noteSectionRef,Observer observer) {
+        Model.getInstance().unSubscribeToNoteSection(noteSectionRef.getNoteBookRef().getUUID(), noteSectionRef.getUUID(),observer);
+    }
+
     public static void createNewSection(NoteBookRef noteBook) {
         Model.getInstance().createNewSection(noteBook.getUUID());
     }
 
-    public static void saveSectionContent(NoteBookRef noteBook,String sectionUUID,String content) {
-        Model.getInstance().saveSectionContent(noteBook.getUUID(), sectionUUID, content);
+    public static void saveSectionContent(NoteBookRef noteBook,String sectionUUID,String noteUUID,String content) {
+        Model.getInstance().saveSectionContent(noteBook.getUUID(), sectionUUID, noteUUID,content);
     }
 
     public static void changeSectionName(NoteBookRef noteBook, String sectionUUID, String name) throws IOException {
@@ -35,4 +43,6 @@ public class Controller {
     public static void onExit() {
         Model.getInstance().onExit();
     }
+
+
 }

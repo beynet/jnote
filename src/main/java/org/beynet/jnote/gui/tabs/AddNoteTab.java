@@ -13,7 +13,7 @@ public class AddNoteTab extends Tab {
         setOnSelectionChanged(event -> {
             if (isSelected() == true) {
                 final TabPane tabPane = getTabPane();
-                if (tabPane!=null) ((NoteBook) tabPane).createNewNote();
+                if (tabPane!=null) ((NoteBook) tabPane).createNewNoteSection();
             }
         });
     }

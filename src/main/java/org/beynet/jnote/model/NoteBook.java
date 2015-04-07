@@ -1,7 +1,9 @@
 package org.beynet.jnote.model;
 
 import org.apache.log4j.Logger;
-import org.beynet.jnote.model.events.SectionModifiedOrCreated;
+import org.beynet.jnote.controler.NoteRef;
+import org.beynet.jnote.controler.NoteSectionRef;
+import org.beynet.jnote.model.events.NoteSectionAdded;
 import org.beynet.jnote.model.events.SectionRenamed;
 
 import java.io.IOException;
@@ -9,7 +11,7 @@ import java.nio.file.Path;
 import java.util.*;
 
 /**
- * Created by beynet on 06/04/2015.
+ * NoteBook : this is mainly a list of {@link NoteSection}
  */
 public class NoteBook extends Observable {
 
@@ -34,7 +36,7 @@ public class NoteBook extends Observable {
         // we send to this new observer our section list
         synchronized (sectionsMap) {
             for (NoteSection section: sectionsMap.values()) {
-                o.update(this,new SectionModifiedOrCreated(section.getUUID(),section.getName(),section.getContent()));
+                o.update(this,new NoteSectionAdded(section.getUUID(),section.getName()));
             }
         }
     }
@@ -52,7 +54,8 @@ public class NoteBook extends Observable {
     private void addSection(NoteSection section) {
         sectionsMap.put(section.getUUID(), section);
         setChanged();
-        notifyObservers(new SectionModifiedOrCreated(section.getUUID(), section.getName(), section.getContent()));
+        //FIXME : here
+        notifyObservers(new NoteSectionAdded(section.getUUID(), section.getName()));
     }
 
     /**
@@ -119,7 +122,7 @@ public class NoteBook extends Observable {
         }
     }
 
-    private NoteSection getSectionByUUID(String uuid) throws IllegalArgumentException {
+    NoteSection getSectionByUUID(String uuid) throws IllegalArgumentException {
         final NoteSection section ;
         synchronized (sectionsMap) {
             section= sectionsMap.get(uuid);
@@ -128,9 +131,12 @@ public class NoteBook extends Observable {
         return section;
     }
 
-    public void saveSectionContent(String uuid,String content) throws IllegalArgumentException {
+    public void saveSectionContent(String uuid,String noteUUID,String content) throws IllegalArgumentException {
         final NoteSection section = getSectionByUUID(uuid);
-        section.setContent(content);
+        //FIXME : protect from MT
+        for (Note n :section.getNotes()) {
+            if (n.getUUID().equals(noteUUID)) n.setContent(content);
+        }
         try {
             section.save();
         } catch (IOException e) {
@@ -151,4 +157,10 @@ public class NoteBook extends Observable {
     private final static Logger logger = Logger.getLogger(NoteBook.class);
     private final String UUID;
 
+    public void subscribeToNoteSection(String sectionUUID,Observer observer) throws IllegalArgumentException{
+        getSectionByUUID(sectionUUID).addObserver(observer);
+    }
+    public void unSubscribeToNoteSection(String sectionUUID,Observer observer) throws IllegalArgumentException{
+        getSectionByUUID(sectionUUID).deleteObserver(observer);
+    }
 }

@@ -43,7 +43,7 @@ public class NoteBook extends TabPane implements Observer ,ModelEventVisitor {
     private void checkClick(MouseEvent event) {
         final Tab selectedItem = getSelectionModel().getSelectedItem();
         if (addNoteTab.equals(selectedItem)) {
-            createNewNote();
+            createNewNoteSection();
         }
     }
 
@@ -64,7 +64,7 @@ public class NoteBook extends TabPane implements Observer ,ModelEventVisitor {
         }
     }
 
-    public void createNewNote() {
+    public void createNewNoteSection() {
         if (currentNoteBook!=null) {
             Controller.createNewSection(currentNoteBook);
         }
@@ -73,8 +73,8 @@ public class NoteBook extends TabPane implements Observer ,ModelEventVisitor {
 
 
     @Override
-    public void visit(SectionModifiedOrCreated event) {
-        NoteSection section = new NoteSection(currentNoteBook,event.getName(),event.getUUID(),event.getContent());
+    public void visit(NoteSectionAdded event) {
+        NoteSection section = new NoteSection(currentNoteBook,event.getName(),event.getUUID());
         Platform.runLater(() -> addSection(section));
     }
 
@@ -99,6 +99,11 @@ public class NoteBook extends TabPane implements Observer ,ModelEventVisitor {
     @Override
     public void visit(NewNoteBookEvent newNoteBookEvent) {
         // NOT INTERESTED BY IT
+    }
+
+    @Override
+    public void visit(NoteAdded noteAdded) {
+
     }
 
     private AddNoteTab addNoteTab;

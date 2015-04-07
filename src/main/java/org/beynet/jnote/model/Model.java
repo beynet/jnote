@@ -95,6 +95,14 @@ public class Model extends Observable implements FileVisitor<Path> {
         getNoteBookByUUID(noteBookUUID).deleteObserver(observer);
     }
 
+    public void subscribeToNoteSection(String noteBookUUID, String sectionUUID,Observer observer) {
+        getNoteBookByUUID(noteBookUUID).subscribeToNoteSection(sectionUUID, observer);
+    }
+
+    public void unSubscribeToNoteSection(String noteBookUUID, String sectionUUID,Observer observer) {
+        getNoteBookByUUID(noteBookUUID).unSubscribeToNoteSection(sectionUUID, observer);
+    }
+
     public void subscribe(Observer observer) {
         super.addObserver(observer);
         synchronized (noteBooks) {
@@ -116,8 +124,8 @@ public class Model extends Observable implements FileVisitor<Path> {
     public void createNewSection(String noteBookUUID) {
         getNoteBookByUUID(noteBookUUID).addSection();
     }
-    public void saveSectionContent(String noteBookUUID, String sectionUUID, String content) {
-        getNoteBookByUUID(noteBookUUID).saveSectionContent(sectionUUID,content);
+    public void saveSectionContent(String noteBookUUID, String sectionUUID, String noteUUID,String content) {
+        getNoteBookByUUID(noteBookUUID).saveSectionContent(sectionUUID,noteUUID,content);
     }
 
     public void changeSectionName(String noteBookUUID, String sectionUUID, String name) throws IOException{
@@ -134,5 +142,6 @@ public class Model extends Observable implements FileVisitor<Path> {
     Map<String,NoteBook> noteBooks ;
     private NoteBook currentNoteBook ;
     private final static Logger logger = Logger.getLogger(Model.class);
+
 
 }

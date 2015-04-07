@@ -1,6 +1,7 @@
 package org.beynet.jnote.model;
 
 import org.apache.log4j.Logger;
+import org.beynet.jnote.model.events.NoteAdded;
 import org.xml.sax.InputSource;
 
 import javax.xml.bind.JAXBContext;
@@ -17,19 +18,31 @@ import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 /**
- * Created by beynet on 06/04/2015.
+ * A note section is a list of notes
  */
 @XmlRootElement(name = "NoteSection")
-public class NoteSection {
+public class NoteSection extends Observable {
     NoteSection() {
         this.UUID = java.util.UUID.randomUUID().toString();
         this.modified=this.created=System.currentTimeMillis();
-        this.content=null;
+    }
+
+    @Override
+    public synchronized void addObserver(Observer o) {
+        logger.debug("add observer to section "+getName());
+        super.addObserver(o);
+        for (Note note : getNotes()) {
+            o.update(this,new NoteAdded(note.getUUID(),note.getName(),note.getContent()));
+        }
+    }
+
+    @Override
+    public synchronized void deleteObserver(Observer o) {
+        logger.debug("remove observer to section "+getName());
+        super.deleteObserver(o);
     }
 
     @XmlElement(name="UUID")
@@ -48,13 +61,11 @@ public class NoteSection {
         this.created=created;
     }
 
-    @XmlElement(name="content")
-    public String getContent() {
-        return content;
+    @XmlElement(name="note")
+    List<Note> getNotes(){
+        return notes;
     }
-    public void setContent(String content) {
-        this.content = content;
-    }
+
 
     @XmlAttribute(name="modified")
     public long getModified() {
@@ -127,6 +138,9 @@ public class NoteSection {
 
     public static NoteSection fromZipFile(Path zipFile) throws IllegalArgumentException {
         NoteSection result = new NoteSection();
+        final Note note = new Note();
+        note.setName("default");
+        result.getNotes().add(note);
         if (Files.exists(zipFile)) {
             final URI uri = URI.create("jar:" + zipFile.toUri().toString());
             final Map<String, String> env = new HashMap<>();
@@ -163,7 +177,7 @@ public class NoteSection {
 
         if (modified != that.modified) return false;
         if (created != that.created) return false;
-        if (content != null ? !content.equals(that.content) : that.content != null) return false;
+        if (notes != null ? !notes.equals(that.notes) : that.notes != null) return false;
         return !(UUID != null ? !UUID.equals(that.UUID) : that.UUID != null);
 
     }
@@ -172,7 +186,7 @@ public class NoteSection {
     public int hashCode() {
         int result = (int) (modified ^ (modified >>> 32));
         result = 31 * result + (int) (created ^ (created >>> 32));
-        result = 31 * result + (content != null ? content.hashCode() : 0);
+        result = 31 * result + (notes != null ? notes.hashCode() : 0);
         result = 31 * result + (UUID != null ? UUID.hashCode() : 0);
         return result;
     }
@@ -187,7 +201,7 @@ public class NoteSection {
 
     private long   modified ;
     private long   created  ;
-    private String content  ;
+    private List<Note> notes = new ArrayList<>();
     private String UUID     ;
     private Path   path     ;
 
