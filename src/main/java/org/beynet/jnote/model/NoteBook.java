@@ -1,18 +1,58 @@
 package org.beynet.jnote.model;
 
 import org.apache.log4j.Logger;
+import org.beynet.jnote.model.events.SectionModifiedOrCreated;
+import org.beynet.jnote.model.events.SectionRenamed;
 
+import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by beynet on 06/04/2015.
  */
-public class NoteBook {
+public class NoteBook extends Observable {
+
     public NoteBook(Path path) {
         this.path = path ;
         logger.debug("create new notebook name="+path.getFileName());
+        this.UUID = java.util.UUID.randomUUID().toString();
+    }
+
+    public String getUUID() {
+        return UUID;
+    }
+
+    public String getName() {
+        return this.path.getFileName().toString();
+    }
+
+    @Override
+    public synchronized void addObserver(Observer o) {
+        logger.debug("new observer");
+        super.addObserver(o);
+        // we send to this new observer our section list
+        synchronized (sectionsMap) {
+            for (NoteSection section: sectionsMap.values()) {
+                o.update(this,new SectionModifiedOrCreated(section.getUUID(),section.getName(),section.getContent()));
+            }
+        }
+    }
+
+    @Override
+    public synchronized void deleteObserver(Observer o) {
+        super.deleteObserver(o);
+        logger.debug("remove observer");
+    }
+
+    /**
+     *
+     * @param section
+     */
+    private void addSection(NoteSection section) {
+        sectionsMap.put(section.getUUID(), section);
+        setChanged();
+        notifyObservers(new SectionModifiedOrCreated(section.getUUID(), section.getName(), section.getContent()));
     }
 
     /**
@@ -24,7 +64,7 @@ public class NoteBook {
     NoteSection addSection(Path filePath) throws IllegalArgumentException {
         logger.debug("add note section " + filePath.toString() + " to note book " + path.getFileName());
         NoteSection noteSection = NoteSection.fromZipFile(path.resolve(filePath));
-        this.sections.add(noteSection);
+        addSection(noteSection);
         return noteSection;
     }
 
@@ -34,21 +74,81 @@ public class NoteBook {
      * @return
      * @throws IllegalArgumentException
      */
-    public NoteSection addSection(String sectionName) throws IllegalArgumentException {
-        //TODO : check if no such section exist
+    private NoteSection _addSection(String sectionName) throws IllegalArgumentException {
         logger.debug("add note section name=" + sectionName + " to note book " + path.getFileName());
         NoteSection noteSection = NoteSection.fromZipFile(path.resolve(sectionName+".zip"));
-        this.sections.add(noteSection);
+        addSection(noteSection);
         return noteSection;
     }
 
-    public List<NoteSection> getSections() {
-        return sections;
+    /**
+     * create a new section with provided name
+     * @param sectionName
+     * @return
+     * @throws IllegalArgumentException : if section name already exists
+     */
+    public NoteSection addSection(String sectionName) throws IllegalArgumentException {
+        synchronized (sectionsMap) {
+            if (nameExist(sectionName)) throw new IllegalArgumentException("section name already exists");
+            return _addSection(sectionName);
+        }
     }
 
 
+    private boolean nameExist(String name) {
+        for (NoteSection section:sectionsMap.values()) {
+            if (section.getName().equals(name)) return true;
+        }
+        return false;
+    }
+
+    /**
+     * create a new section with default name
+     * @return
+     * @throws IllegalArgumentException
+     */
+    public NoteSection addSection() throws IllegalArgumentException {
+        String newSectionName ="NEW SECTION";
+        int i = 0;
+        synchronized (sectionsMap) {
+            while (nameExist(newSectionName)) {
+                i++;
+                newSectionName=newSectionName+i;
+            }
+            return _addSection(newSectionName);
+        }
+    }
+
+    private NoteSection getSectionByUUID(String uuid) throws IllegalArgumentException {
+        final NoteSection section ;
+        synchronized (sectionsMap) {
+            section= sectionsMap.get(uuid);
+        }
+        if (section==null) throw new IllegalArgumentException("invalid section UUID");
+        return section;
+    }
+
+    public void saveSectionContent(String uuid,String content) throws IllegalArgumentException {
+        final NoteSection section = getSectionByUUID(uuid);
+        section.setContent(content);
+        try {
+            section.save();
+        } catch (IOException e) {
+            //TODO : raise an error
+            logger.error("unable to save section",e);
+        }
+    }
+
+    public void changeSectionName(String uuid, String name) throws IllegalArgumentException,IOException {
+        final NoteSection section = getSectionByUUID(uuid);
+        section.changeName(name);
+        setChanged();
+        notifyObservers(new SectionRenamed(uuid,name));
+    }
+
     private Path path;
-    private List<NoteSection> sections = new ArrayList<>();
+    protected Map<String,NoteSection> sectionsMap = new HashMap<>();
     private final static Logger logger = Logger.getLogger(NoteBook.class);
+    private final String UUID;
 
 }

@@ -94,7 +94,8 @@ public class NoteSection {
     }
 
     public void save() throws IOException {
-        final URI uri = URI.create("jar:file:" + path);
+        final URI uri = URI.create("jar:" + path.toUri().toString());
+        System.out.println(uri);
         final Map<String, String> env = new HashMap<>();
         if (!Files.exists(path)) {
             env.put("create", "true");
@@ -112,11 +113,22 @@ public class NoteSection {
 
     }
 
+    /**
+     * change current section name
+     * @param newName
+     * @throws IOException
+     */
+    public void changeName(String newName) throws IOException {
+        Path newPath = path.getParent().resolve(newName+".zip");
+        Files.move(path,newPath);
+        path=newPath;
+    }
+
 
     public static NoteSection fromZipFile(Path zipFile) throws IllegalArgumentException {
         NoteSection result = new NoteSection();
         if (Files.exists(zipFile)) {
-            final URI uri = URI.create("jar:file:" + zipFile);
+            final URI uri = URI.create("jar:" + zipFile.toUri().toString());
             final Map<String, String> env = new HashMap<>();
             try (FileSystem fileSystem = FileSystems.newFileSystem(uri, env)) {
                 Path path = fileSystem.getPath("notesection.xml");

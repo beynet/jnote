@@ -7,7 +7,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
+import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -33,11 +33,16 @@ public class ModelTests extends DefaultTest{
         assertThat(note2,is(note));
     }
 
+    /**
+     * in this test we create "by hand" a note book with one section
+     * and we check if we load it correctly using model class
+     * @throws IOException
+     */
     @Test
     public void load() throws IOException {
         final String name = "section1";
         Path tmpDir = Paths.get(System.getProperty("java.io.tmpdir"));
-        Path root = tmpDir.resolve(".jnote");
+        Path root = tmpDir.resolve(Files.createTempDirectory(tmpDir,".jnote"));
         Path nb1 = root.resolve("nb1");
         Files.createDirectories(nb1);
         NoteBook nb = new NoteBook(nb1);
@@ -47,11 +52,30 @@ public class ModelTests extends DefaultTest{
         section1.save();
 
         Model model = new Model(root);
-        List<NoteBook> noteBooks = model.getNoteBooks();
-        assertThat(Integer.valueOf(noteBooks.size()), is(Integer.valueOf(1)));
-        List<NoteSection> sections = noteBooks.get(0).getSections();
-        assertThat(Integer.valueOf(sections.size()), is(Integer.valueOf(1)));
 
+        Map<String,NoteBook> noteBooks = model.noteBooks;
+        assertThat(Integer.valueOf(noteBooks.size()), is(Integer.valueOf(1)));
+
+
+        Map<String,NoteSection> sections = noteBooks.values().iterator().next().sectionsMap;
+        assertThat(Integer.valueOf(sections.size()), is(Integer.valueOf(1)));
+        NoteSection sectionFound = sections.values().iterator().next();
+
+        assertThat(sectionFound,is(section1));
 
     }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void createSectionWithNameAlreadyExisting() throws IOException {
+        final String name = "section1";
+        Path tmpDir = Paths.get(System.getProperty("java.io.tmpdir"));
+        Path root = tmpDir.resolve(Files.createTempDirectory(tmpDir,".jnote"));
+        Path nb1 = root.resolve("nb1");
+        Files.createDirectories(nb1);
+        NoteBook nb = new NoteBook(nb1);
+        NoteSection section1 = nb.addSection(name);
+        NoteSection section2 = nb.addSection(name);
+
+    }
+
 }

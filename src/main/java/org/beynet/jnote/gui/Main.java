@@ -6,16 +6,18 @@ import javafx.scene.Scene;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
-import javafx.scene.control.TabPane;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.beynet.jnote.gui.tabs.NoteSection;
-import org.beynet.jnote.gui.tabs.Notes;
+import org.beynet.jnote.controler.Controller;
+import org.beynet.jnote.gui.tabs.MainPanel;
+import org.beynet.jnote.model.Model;
 import org.beynet.jnote.utils.I18NHelper;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ResourceBundle;
 
 public class Main extends Application {
@@ -23,6 +25,8 @@ public class Main extends Application {
     public static void main(String[] args) {
         BasicConfigurator.configure();
         Logger.getRootLogger().setLevel(Level.DEBUG);
+        Path userHome = Paths.get((String) System.getProperty("user.home"));
+        Model.createInstance(userHome.resolve(".jnote"));
         launch(args);
     }
 
@@ -50,8 +54,9 @@ public class Main extends Application {
     }
 
     private void addMainPane(BorderPane pane) {
-        Notes tabs = new Notes();
-        pane.setCenter(tabs);
+        //Notes tabs = new Notes();
+        //pane.setCenter(tabs);
+        pane.setCenter(new MainPanel());
     }
 
     private void addMenuBar(BorderPane pane) {
@@ -75,9 +80,13 @@ public class Main extends Application {
     }
 
     private void exitApplication() {
+        logger.debug("on exit");
+        Controller.onExit();
         System.exit(0);
     }
 
     private Stage currentStage ;
     private Scene currentScene ;
+
+    private final static Logger logger = Logger.getLogger(Main.class);
 }
