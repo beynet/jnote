@@ -28,7 +28,6 @@ public class NoteList extends ListView<NoteListItem> {
             if (event.getClickCount() == 2) {
                 NoteListItem item = getSelectionModel().getSelectedItem();
                 if (item != null) {
-                    System.out.println("!!!!!!!!!!!!");
                     item.setInEdition(true);
                 }
             }

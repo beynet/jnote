@@ -6,7 +6,7 @@ package org.beynet.jnote.controler;
 public class NoteRef {
     private final String UUID;
     private final String name;
-    private final String content;
+    private String content;
     private final NoteSectionRef noteSectionRef;
 
     public NoteRef(NoteSectionRef noteSectionRef,String UUID,String name,String content) {
@@ -30,5 +30,9 @@ public class NoteRef {
 
     public String getContent() {
         return content;
+    }
+
+    public void setContent(String content) {
+        this.content = content;
     }
 }

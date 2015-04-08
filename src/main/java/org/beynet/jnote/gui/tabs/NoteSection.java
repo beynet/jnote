@@ -1,20 +1,14 @@
 package org.beynet.jnote.gui.tabs;
 
 import javafx.application.Platform;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.web.HTMLEditor;
-import javafx.util.Callback;
 import org.apache.log4j.Logger;
 import org.beynet.jnote.controler.Controller;
 import org.beynet.jnote.controler.NoteBookRef;
 import org.beynet.jnote.controler.NoteRef;
 import org.beynet.jnote.controler.NoteSectionRef;
-import org.beynet.jnote.model.Model;
 import org.beynet.jnote.model.events.*;
 
 import java.io.IOException;
@@ -68,6 +62,7 @@ public class NoteSection extends Tab implements Observer,ModelEventVisitor {
                 save(oldValue.getNoteRef());
             }
             if (newValue!=null) {
+                System.out.println("change list item !!!!!!!!!, content="+newValue.getNoteRef().getContent());
                 content.setDisable(false);
                 content.setHtmlText(newValue.getNoteRef().getContent());
             }
@@ -99,10 +94,10 @@ public class NoteSection extends Tab implements Observer,ModelEventVisitor {
         }
     }
     private void save(NoteRef selectedItem) {
-        logger.debug("saving content");
+        logger.debug("saving note content = "+content.getHtmlText());
         if (selectedItem!=null) {
             try {
-                Controller.saveSectionContent(noteSectionRef.getNoteBookRef(),UUID,selectedItem.getUUID(),content.getHtmlText());
+                Controller.saveNoteContent(noteSectionRef.getNoteBookRef(), UUID, selectedItem.getUUID(), content.getHtmlText());
             } catch (IOException e) {
                 //TODO : show an alert
             }
@@ -162,6 +157,15 @@ public class NoteSection extends Tab implements Observer,ModelEventVisitor {
         for (NoteListItem n:noteList.getList()) {
             if (n.getNoteRef().getUUID().equals(noteRenamed.getNoteUUID())) {
                 n.changeName(noteRenamed.getName());
+            }
+        }
+    }
+
+    @Override
+    public void visit(NoteContentChanged noteContentChanged) {
+        for (NoteListItem n:noteList.getList()) {
+            if (n.getNoteRef().getUUID().equals(noteContentChanged.getNoteUUID())) {
+                n.changeContent(noteContentChanged.getContent());
             }
         }
     }

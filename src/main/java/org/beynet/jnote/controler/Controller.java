@@ -32,8 +32,8 @@ public class Controller {
         Model.getInstance().createNewSection(noteBook.getUUID());
     }
 
-    public static void saveSectionContent(NoteBookRef noteBook,String sectionUUID,String noteUUID,String content) throws IOException{
-        Model.getInstance().saveSectionContent(noteBook.getUUID(), sectionUUID, noteUUID, content);
+    public static void saveNoteContent(NoteBookRef noteBook, String sectionUUID, String noteUUID, String content) throws IOException{
+        Model.getInstance().saveNoteContent(noteBook.getUUID(), sectionUUID, noteUUID, content);
     }
 
     public static void changeSectionName(NoteBookRef noteBook, String sectionUUID, String name) throws IOException {

@@ -125,8 +125,8 @@ public class Model extends Observable implements FileVisitor<Path> {
     public void createNewSection(String noteBookUUID) {
         getNoteBookByUUID(noteBookUUID).addSection();
     }
-    public void saveSectionContent(String noteBookUUID, String sectionUUID, String noteUUID,String content) throws IOException{
-        getNoteBookByUUID(noteBookUUID).saveSectionContent(sectionUUID, noteUUID, content);
+    public void saveNoteContent(String noteBookUUID, String sectionUUID, String noteUUID, String content) throws IOException{
+        getNoteBookByUUID(noteBookUUID).saveNoteContent(sectionUUID, noteUUID, content);
     }
 
     public void changeSectionName(String noteBookUUID, String sectionUUID, String name) throws IOException{

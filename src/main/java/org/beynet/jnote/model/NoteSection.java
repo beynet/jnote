@@ -2,6 +2,7 @@ package org.beynet.jnote.model;
 
 import org.apache.log4j.Logger;
 import org.beynet.jnote.model.events.NoteAdded;
+import org.beynet.jnote.model.events.NoteContentChanged;
 import org.beynet.jnote.model.events.NoteRenamed;
 import org.xml.sax.InputSource;
 
@@ -107,7 +108,7 @@ public class NoteSection extends Observable {
 
     public void save() throws IOException {
         final URI uri = URI.create("jar:" + path.toUri().toString());
-        System.out.println(uri);
+        logger.debug("saving note section "+uri.toString());
         final Map<String, String> env = new HashMap<>();
         if (!Files.exists(path)) {
             env.put("create", "true");
@@ -251,4 +252,13 @@ public class NoteSection extends Observable {
         }
     }
 
+    public void saveNoteContent(String noteUUID,String content) throws IOException {
+        //FIXME : protect from MT
+        for (Note n :getNotes()) {
+            if (n.getUUID().equals(noteUUID)) n.setContent(content);
+        }
+        save();
+        setChanged();
+        notifyObservers(new NoteContentChanged(getUUID(),noteUUID,content));
+    }
 }

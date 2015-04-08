@@ -74,6 +74,11 @@ public class MainPanel extends VBox implements Observer,ModelEventVisitor{
 
     }
 
+    @Override
+    public void visit(NoteContentChanged noteContentChanged) {
+
+    }
+
     private ObservableList<NoteBookRef> noteBooksList ;
     private ComboBox<NoteBookRef> noteBooks ;
     private NoteBook notes;

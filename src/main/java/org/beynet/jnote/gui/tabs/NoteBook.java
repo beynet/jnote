@@ -108,6 +108,11 @@ public class NoteBook extends TabPane implements Observer ,ModelEventVisitor {
 
     }
 
+    @Override
+    public void visit(NoteContentChanged noteContentChanged) {
+
+    }
+
     private AddNoteTab addNoteTab;
     private List<NoteSection> mySections = new ArrayList<>();
     private NoteBookRef currentNoteBook ;

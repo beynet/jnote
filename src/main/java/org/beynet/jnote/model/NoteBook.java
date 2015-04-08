@@ -130,13 +130,8 @@ public class NoteBook extends Observable {
         return section;
     }
 
-    public void saveSectionContent(String uuid,String noteUUID,String content) throws IllegalArgumentException,IOException {
-        final NoteSection section = getSectionByUUID(uuid);
-        //FIXME : protect from MT
-        for (Note n :section.getNotes()) {
-            if (n.getUUID().equals(noteUUID)) n.setContent(content);
-        }
-        section.save();
+    public void saveNoteContent(String uuid, String noteUUID, String content) throws IllegalArgumentException,IOException {
+        getSectionByUUID(uuid).saveNoteContent(noteUUID,content);
     }
 
     public void changeSectionName(String uuid, String name) throws IllegalArgumentException,IOException {
