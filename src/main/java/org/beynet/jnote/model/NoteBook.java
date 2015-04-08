@@ -1,8 +1,7 @@
 package org.beynet.jnote.model;
 
 import org.apache.log4j.Logger;
-import org.beynet.jnote.controler.NoteRef;
-import org.beynet.jnote.controler.NoteSectionRef;
+import org.beynet.jnote.model.events.NoteRenamed;
 import org.beynet.jnote.model.events.NoteSectionAdded;
 import org.beynet.jnote.model.events.SectionRenamed;
 
@@ -131,18 +130,13 @@ public class NoteBook extends Observable {
         return section;
     }
 
-    public void saveSectionContent(String uuid,String noteUUID,String content) throws IllegalArgumentException {
+    public void saveSectionContent(String uuid,String noteUUID,String content) throws IllegalArgumentException,IOException {
         final NoteSection section = getSectionByUUID(uuid);
         //FIXME : protect from MT
         for (Note n :section.getNotes()) {
             if (n.getUUID().equals(noteUUID)) n.setContent(content);
         }
-        try {
-            section.save();
-        } catch (IOException e) {
-            //TODO : raise an error
-            logger.error("unable to save section",e);
-        }
+        section.save();
     }
 
     public void changeSectionName(String uuid, String name) throws IllegalArgumentException,IOException {
@@ -152,10 +146,11 @@ public class NoteBook extends Observable {
         notifyObservers(new SectionRenamed(uuid,name));
     }
 
-    private Path path;
-    protected Map<String,NoteSection> sectionsMap = new HashMap<>();
-    private final static Logger logger = Logger.getLogger(NoteBook.class);
-    private final String UUID;
+    public void changeNoteName(String sectionUUID, String noteUUID, String text) throws IllegalArgumentException,IOException {
+        getSectionByUUID(sectionUUID).changeNoteName(noteUUID,text);
+    }
+
+
 
     public void subscribeToNoteSection(String sectionUUID,Observer observer) throws IllegalArgumentException{
         getSectionByUUID(sectionUUID).addObserver(observer);
@@ -163,4 +158,13 @@ public class NoteBook extends Observable {
     public void unSubscribeToNoteSection(String sectionUUID,Observer observer) throws IllegalArgumentException{
         getSectionByUUID(sectionUUID).deleteObserver(observer);
     }
+
+    public void addNote(String sectionUUID) throws IOException {
+        getSectionByUUID(sectionUUID).addNote();
+    }
+
+    private Path path;
+    protected Map<String,NoteSection> sectionsMap = new HashMap<>();
+    private final static Logger logger = Logger.getLogger(NoteBook.class);
+    private final String UUID;
 }

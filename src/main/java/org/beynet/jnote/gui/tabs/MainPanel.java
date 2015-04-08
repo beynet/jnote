@@ -48,6 +48,11 @@ public class MainPanel extends VBox implements Observer,ModelEventVisitor{
     }
 
     @Override
+    public void visit(NoteRenamed noteRenamed) {
+
+    }
+
+    @Override
     public void visit(NewNoteBookEvent newNoteBookEvent) {
         Platform.runLater(()->{
             noteBooksList.add(new NoteBookRef(newNoteBookEvent.getUUID(),newNoteBookEvent.getName()));

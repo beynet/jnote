@@ -13,4 +13,6 @@ public interface ModelEventVisitor {
     void visit(OnExitEvent onExitEvent);
 
     void visit(NoteAdded noteAdded);
+
+    void visit(NoteRenamed noteRenamed);
 }

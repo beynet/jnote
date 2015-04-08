@@ -7,20 +7,21 @@ public class NoteRef {
     private final String UUID;
     private final String name;
     private final String content;
+    private final NoteSectionRef noteSectionRef;
 
-    public NoteRef(String UUID,String name,String content) {
+    public NoteRef(NoteSectionRef noteSectionRef,String UUID,String name,String content) {
         this.UUID=UUID;
         this.name=name;
         this.content=content;
+        this.noteSectionRef=noteSectionRef;
+    }
+
+    public NoteSectionRef getNoteSectionRef() {
+        return noteSectionRef;
     }
 
     public String getUUID() {
         return UUID;
-    }
-
-    @Override
-    public String toString() {
-        return getName();
     }
 
     public String getName() {

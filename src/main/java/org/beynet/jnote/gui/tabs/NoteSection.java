@@ -5,12 +5,10 @@ import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.scene.control.Label;
-import javafx.scene.control.ListView;
-import javafx.scene.control.Tab;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.web.HTMLEditor;
+import javafx.util.Callback;
 import org.apache.log4j.Logger;
 import org.beynet.jnote.controler.Controller;
 import org.beynet.jnote.controler.NoteBookRef;
@@ -29,6 +27,8 @@ import java.util.Observer;
 public class NoteSection extends Tab implements Observer,ModelEventVisitor {
 
     public NoteSection(NoteBookRef noteBookRef,String name,String UUID) {
+        this.UUID = UUID;
+        this.noteSectionRef = new NoteSectionRef(noteBookRef,UUID,name);
         labeltitle = new Label(name);
         fieldTitle = new TextField();
         setGraphic(labeltitle);
@@ -43,7 +43,7 @@ public class NoteSection extends Tab implements Observer,ModelEventVisitor {
             //labeltitle.setText(fieldTitle.getText());
             setGraphic(labeltitle);
             try {
-                Controller.changeSectionName(noteBookRef,UUID,fieldTitle.getText());
+                Controller.changeSectionName(noteBookRef, UUID, fieldTitle.getText());
             } catch (IOException e) {
                 //TODO : show an alert
                 logger.error("unable to modify section name");
@@ -51,58 +51,62 @@ public class NoteSection extends Tab implements Observer,ModelEventVisitor {
         });
         HBox hbox = new HBox();
 
-        list = FXCollections.observableArrayList();
-        listView = new ListView<>(list);
+
+        noteList = new NoteList(noteSectionRef);
         content = new HTMLEditor();
         content.setDisable(true);
         hbox.getChildren().add(content);
-        hbox.getChildren().add(listView);
-
+        hbox.getChildren().add(noteList);
 
         setContent(hbox);
+
+
+        // enable html content
+        // -------------------
+        noteList.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            if (oldValue!=null) {
+                save(oldValue.getNoteRef());
+            }
+            if (newValue!=null) {
+                content.setDisable(false);
+                content.setHtmlText(newValue.getNoteRef().getContent());
+            }
+            else {
+                content.setDisable(true);
+            }
+        });
+
+
+
 
         //saving content when tab change
         setOnSelectionChanged((evt) -> {
             if (isSelected() == false) {
-                save();
                 Controller.unSubscribeToNoteSection(noteSectionRef, this);
-                while (list.size()>0) list.remove(0);
-
+                save();
+                while (noteList.getList().size()>0) noteList.getList().remove(0);
             } else {
                 Controller.subscribeToNoteSection(noteSectionRef, this);
             }
         });
 
-        //enable html content
-        listView.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<NoteRef>() {
-            @Override
-            public void changed(ObservableValue<? extends NoteRef> observable, NoteRef oldValue, NoteRef newValue) {
-                if (oldValue!=null) {
-                    save(oldValue);
-                }
-                if (newValue!=null) {
-                    content.setDisable(false);
-                    content.setHtmlText(newValue.getContent());
-                }
-                else {
-                    content.setDisable(true);
-                }
-            }
-        });
-
-
-        this.UUID = UUID;
-        this.noteSectionRef = new NoteSectionRef(noteBookRef,UUID,name);
-
     }
 
     void save() {
-        final NoteRef selectedItem = listView.getSelectionModel().getSelectedItem();
-        save(selectedItem);
+        final NoteListItem selectedItem = noteList.getSelectionModel().getSelectedItem();
+        if (selectedItem!=null) {
+            save(selectedItem.getNoteRef());
+        }
     }
     private void save(NoteRef selectedItem) {
         logger.debug("saving content");
-        if (selectedItem!=null) Controller.saveSectionContent(noteSectionRef.getNoteBookRef(),UUID,selectedItem.getUUID(),content.getHtmlText());
+        if (selectedItem!=null) {
+            try {
+                Controller.saveSectionContent(noteSectionRef.getNoteBookRef(),UUID,selectedItem.getUUID(),content.getHtmlText());
+            } catch (IOException e) {
+                //TODO : show an alert
+            }
+        }
     }
 
     public String getUUID() {
@@ -146,18 +150,29 @@ public class NoteSection extends Tab implements Observer,ModelEventVisitor {
     @Override
     public void visit(NoteAdded noteAdded) {
         Platform.runLater(()->{
-            list.add(new NoteRef(noteAdded.getUUID(),noteAdded.getName(),noteAdded.getContent()));
+            if (isSelected() == true) {
+                logger.debug("add new note name=" + noteAdded.getName() + " UUID=" + noteAdded.getUUID() + " to section " + noteSectionRef.getSectionName());
+                noteList.getList().add(new NoteListItem(new NoteRef(noteSectionRef, noteAdded.getUUID(), noteAdded.getName(), noteAdded.getContent()), false));
+            }
         });
     }
 
+    @Override
+    public void visit(NoteRenamed noteRenamed) {
+        for (NoteListItem n:noteList.getList()) {
+            if (n.getNoteRef().getUUID().equals(noteRenamed.getNoteUUID())) {
+                n.changeName(noteRenamed.getName());
+            }
+        }
+    }
 
     private HTMLEditor content;
     private String UUID;
     private NoteSectionRef noteSectionRef;
     private Label labeltitle ;
     private TextField fieldTitle ;
-    private ObservableList<NoteRef> list ;
-    private ListView<NoteRef> listView;
+
+    private NoteList noteList;
 
     private final static Logger logger = Logger.getLogger(NoteSection.class);
 }

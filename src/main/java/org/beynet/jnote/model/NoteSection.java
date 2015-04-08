@@ -2,6 +2,7 @@ package org.beynet.jnote.model;
 
 import org.apache.log4j.Logger;
 import org.beynet.jnote.model.events.NoteAdded;
+import org.beynet.jnote.model.events.NoteRenamed;
 import org.xml.sax.InputSource;
 
 import javax.xml.bind.JAXBContext;
@@ -130,8 +131,8 @@ public class NoteSection extends Observable {
      * @throws IOException
      */
     public void changeName(String newName) throws IOException {
-        Path newPath = path.getParent().resolve(newName+".zip");
-        Files.move(path,newPath);
+        Path newPath = path.getParent().resolve(newName + ".zip");
+        Files.move(path, newPath);
         path=newPath;
     }
 
@@ -199,6 +200,40 @@ public class NoteSection extends Observable {
         else return fileName.substring(0,i);
     }
 
+    public void changeNoteName(String noteUUID, String text) throws IOException {
+        for (Note n : getNotes()) {
+            if (n.getUUID().equals(noteUUID)) {
+                n.setName(text);
+                save();
+                setChanged();
+                notifyObservers(new NoteRenamed(getUUID(),noteUUID,text));
+            }
+        }
+    }
+
+    private boolean nameExist(String name) {
+        for (Note note:getNotes()) {
+            if (note.getName().equals(name)) return true;
+        }
+        return false;
+    }
+
+    public void addNote() throws IOException {
+        final Note note = new Note();
+        String newName = "NEW NOTE";
+        String name =newName;
+        int i=0;
+        while (nameExist(name)) {
+            i++;
+            name=newName+" "+i;
+        }
+        note.setName(name);
+        getNotes().add(note);
+        save();
+        setChanged();
+        notifyObservers(new NoteAdded(note.getUUID(),note.getName(),note.getContent()));
+    }
+
     private long   modified ;
     private long   created  ;
     private List<Note> notes = new ArrayList<>();
@@ -215,4 +250,5 @@ public class NoteSection extends Observable {
             throw new RuntimeException("initialization error",e);
         }
     }
+
 }

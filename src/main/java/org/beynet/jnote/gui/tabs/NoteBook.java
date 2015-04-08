@@ -49,12 +49,9 @@ public class NoteBook extends TabPane implements Observer ,ModelEventVisitor {
 
 
     private void addSection(NoteSection section) {
-        getTabs().clear();
         mySections.add(section);
-        for (NoteSection s : mySections) {
-            getTabs().add(s);
-        }
-        getTabs().add(addNoteTab);
+        getTabs().add(0, section);
+        getSelectionModel().selectFirst();
     }
 
     @Override
@@ -103,6 +100,11 @@ public class NoteBook extends TabPane implements Observer ,ModelEventVisitor {
 
     @Override
     public void visit(NoteAdded noteAdded) {
+
+    }
+
+    @Override
+    public void visit(NoteRenamed noteRenamed) {
 
     }
 

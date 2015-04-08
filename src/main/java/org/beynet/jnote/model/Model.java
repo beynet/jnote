@@ -1,6 +1,7 @@
 package org.beynet.jnote.model;
 
 import org.apache.log4j.Logger;
+import org.beynet.jnote.controler.NoteSectionRef;
 import org.beynet.jnote.model.events.NewNoteBookEvent;
 import org.beynet.jnote.model.events.OnExitEvent;
 
@@ -124,17 +125,23 @@ public class Model extends Observable implements FileVisitor<Path> {
     public void createNewSection(String noteBookUUID) {
         getNoteBookByUUID(noteBookUUID).addSection();
     }
-    public void saveSectionContent(String noteBookUUID, String sectionUUID, String noteUUID,String content) {
-        getNoteBookByUUID(noteBookUUID).saveSectionContent(sectionUUID,noteUUID,content);
+    public void saveSectionContent(String noteBookUUID, String sectionUUID, String noteUUID,String content) throws IOException{
+        getNoteBookByUUID(noteBookUUID).saveSectionContent(sectionUUID, noteUUID, content);
     }
 
     public void changeSectionName(String noteBookUUID, String sectionUUID, String name) throws IOException{
-        getNoteBookByUUID(noteBookUUID).changeSectionName(sectionUUID,name);
+        getNoteBookByUUID(noteBookUUID).changeSectionName(sectionUUID, name);
+    }
+    public void changeNoteName(NoteSectionRef noteSectionRef, String noteUUID, String text) throws IOException{
+        getNoteBookByUUID(noteSectionRef.getNoteBookRef().getUUID()).changeNoteName(noteSectionRef.getUUID(),noteUUID,text);
     }
 
     public void onExit() {
         setChanged();
         notifyObservers(new OnExitEvent());
+    }
+    public void addNote(NoteSectionRef noteSectionRef) throws IOException {
+        getNoteBookByUUID(noteSectionRef.getNoteBookRef().getUUID()).addNote(noteSectionRef.getUUID());
     }
 
     private Path rootDir ;
