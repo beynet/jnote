@@ -51,9 +51,13 @@ public class NoteSection extends Tab implements Observer,ModelEventVisitor {
         content.setDisable(true);
         hbox.getChildren().add(content);
         hbox.getChildren().add(noteList);
-
+        noteList.setPrefWidth(hbox.getWidth() * 15 / 100);
+        content.setPrefWidth(hbox.getWidth() - noteList.getWidth());
+        hbox.widthProperty().addListener((observable1, oldValue1, newValue1) -> {
+            noteList.setPrefWidth(newValue1.doubleValue()*15/100);
+            content.setPrefWidth(newValue1.doubleValue() - noteList.getPrefWidth());
+        });
         setContent(hbox);
-
 
         // enable html content
         // -------------------
@@ -62,9 +66,15 @@ public class NoteSection extends Tab implements Observer,ModelEventVisitor {
                 save(oldValue.getNoteRef());
             }
             if (newValue!=null) {
-                System.out.println("change list item !!!!!!!!!, content="+newValue.getNoteRef().getContent());
+                NoteRef noteRef = newValue.getNoteRef();
+                logger.debug("change current note");
                 content.setDisable(false);
-                content.setHtmlText(newValue.getNoteRef().getContent());
+                if (noteRef.getContent()!=null) {
+                    content.setHtmlText(noteRef.getContent());
+                }
+                else {
+                    content.setHtmlText("");
+                }
             }
             else {
                 content.setDisable(true);

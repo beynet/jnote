@@ -10,8 +10,15 @@ import java.util.Observer;
  */
 public class Controller {
 
+    /**
+     * subscribe to general model. Such a subscriber will receive :<ul>
+     *     <li>notification when a new notebook is created</li>
+     * </ul>
+     *
+     * @param observer
+     */
     public static void subscribeToModel(Observer observer) {
-        Model.getInstance().subscribe(observer);
+        Model.getInstance().addObserver(observer);
     }
 
     public static void subscribeToNoteBook(NoteBookRef noteBook,Observer observer) {

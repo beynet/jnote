@@ -7,6 +7,7 @@ import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.control.ComboBox;
 import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
 import org.beynet.jnote.controler.Controller;
 import org.beynet.jnote.controler.NoteBookRef;
 import org.beynet.jnote.model.events.*;
@@ -21,6 +22,19 @@ public class MainPanel extends VBox implements Observer,ModelEventVisitor{
     public MainPanel() {
         selected =null;
         notes=new NoteBook();
+
+        // binding dimensions
+        notes.setPrefWidth(getWidth());
+        widthProperty().addListener((observable, oldValue, newValue) -> {
+            notes.setPrefWidth(getWidth());
+        });
+        // binding dimensions
+        notes.setPrefHeight(getHeight());
+        heightProperty().addListener((observable, oldValue, newValue) -> {
+            notes.setPrefHeight(getHeight());
+        });
+
+
         noteBooksList = FXCollections.observableArrayList();
         noteBooks=new ComboBox<>(noteBooksList);
         getChildren().add(noteBooks);
@@ -30,7 +44,7 @@ public class MainPanel extends VBox implements Observer,ModelEventVisitor{
         noteBooks.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent event) {
-                selected=noteBooks.getValue();
+                selected = noteBooks.getValue();
                 notes.changeCurrentNoteBook(selected);
             }
         });

@@ -104,7 +104,7 @@ public class Model extends Observable implements FileVisitor<Path> {
         getNoteBookByUUID(noteBookUUID).unSubscribeToNoteSection(sectionUUID, observer);
     }
 
-    public void subscribe(Observer observer) {
+    public void addObserver(Observer observer) {
         super.addObserver(observer);
         synchronized (noteBooks) {
             for (Map.Entry<String,NoteBook> entry : noteBooks.entrySet()) {

@@ -12,6 +12,7 @@ import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.beynet.jnote.controler.Controller;
+import org.beynet.jnote.gui.dialogs.NoteBookName;
 import org.beynet.jnote.gui.tabs.MainPanel;
 import org.beynet.jnote.model.Model;
 import org.beynet.jnote.utils.I18NHelper;
@@ -49,6 +50,7 @@ public class Main extends Application {
 
         addMenuBar(pane);
         addMainPane(pane);
+        pane.setBottom(null);
         currentStage.setScene(currentScene);
         currentStage.show();
     }
@@ -56,27 +58,61 @@ public class Main extends Application {
     private void addMainPane(BorderPane pane) {
         //Notes tabs = new Notes();
         //pane.setCenter(tabs);
-        pane.setCenter(new MainPanel());
+        MainPanel mainPanel = new MainPanel();
+        pane.setCenter(mainPanel);
+        mainPanel.setPrefWidth(currentStage.getWidth());
+        currentStage.widthProperty().addListener((observable, oldValue, newValue) -> {
+            mainPanel.setPrefWidth(currentStage.getWidth());
+        });
+
+        mainPanel.setPrefHeight(currentStage.getHeight()-bar.getHeight());
+        currentStage.heightProperty().addListener((observable, oldValue, newValue) -> {
+            mainPanel.setPrefHeight(currentStage.getHeight()-bar.getHeight());
+        });
     }
 
     private void addMenuBar(BorderPane pane) {
         final ResourceBundle labelResourceBundle = I18NHelper.getLabelResourceBundle();
-        final MenuBar bar = new MenuBar();
+        bar = new MenuBar();
         bar.prefWidthProperty().bind(currentStage.widthProperty());
         pane.setTop(bar);
 
         final Menu file = new Menu(labelResourceBundle.getString("file"));
-        final MenuItem exit = new MenuItem(labelResourceBundle.getString("exit"));
-        exit.setOnAction((evt)->{
-            exitApplication();
-        });
-        file.getItems().add(exit);
+        // exit menu item
+        // --------------
+        {
+            final MenuItem exit = new MenuItem(labelResourceBundle.getString("exit"));
+            exit.setOnAction((evt) -> {
+                exitApplication();
+            });
+            file.getItems().add(exit);
+        }
+
+        // add note book menu item
+        // -----------------------
+        {
+            final MenuItem addNoteBook = new MenuItem(labelResourceBundle.getString("addNoteBook"));
+            addNoteBook.setOnAction((evt) -> {
+                addNewNoteBook();
+            });
+            file.getItems().add(addNoteBook);
+        }
 
         // add all menu
         // ------------
         bar.getMenus().add(file);
 
 
+    }
+
+    private void addNewNoteBook() {
+        String noteBookName;
+        NoteBookName noteBookNameDialog = new NoteBookName(currentStage, new Double(300), new Double(60));
+        noteBookNameDialog.show();
+        final String name = noteBookNameDialog.getName();
+        if (name !=null) {
+            //Controller.addNoteBook(noteBookName);
+        }
     }
 
     private void exitApplication() {
@@ -87,6 +123,7 @@ public class Main extends Application {
 
     private Stage currentStage ;
     private Scene currentScene ;
+    private MenuBar bar;
 
     private final static Logger logger = Logger.getLogger(Main.class);
 }
