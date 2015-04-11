@@ -1,5 +1,6 @@
 package org.beynet.jnote.gui.dialogs;
 
+import javafx.application.Platform;
 import javafx.scene.Group;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -7,7 +8,10 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.GridPane;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
+import org.beynet.jnote.controler.Controller;
 import org.beynet.jnote.utils.I18NHelper;
+
+import java.io.IOException;
 
 /**
  * Created by beynet on 11/04/2015.
@@ -34,6 +38,16 @@ public class NoteBookName extends DialogModal{
         pane.add(confirm,1,1);
         confirm.setOnAction(event -> {
             this.close();
+            final String name = getName();
+            Platform.runLater(() -> {
+                if (name != null && !"".equals(name)) {
+                    try {
+                        Controller.addNoteBook(name);
+                    } catch (IOException e) {
+                        new Alert(parent, "unable to create note book " + e.getMessage()).show();
+                    }
+                }
+            });
         });
     }
 

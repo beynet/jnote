@@ -133,7 +133,7 @@ public class Model extends Observable implements FileVisitor<Path> {
         getNoteBookByUUID(noteBookUUID).changeSectionName(sectionUUID, name);
     }
     public void changeNoteName(NoteSectionRef noteSectionRef, String noteUUID, String text) throws IOException{
-        getNoteBookByUUID(noteSectionRef.getNoteBookRef().getUUID()).changeNoteName(noteSectionRef.getUUID(),noteUUID,text);
+        getNoteBookByUUID(noteSectionRef.getNoteBookRef().getUUID()).changeNoteName(noteSectionRef.getUUID(), noteUUID, text);
     }
 
     public void onExit() {
@@ -142,6 +142,22 @@ public class Model extends Observable implements FileVisitor<Path> {
     }
     public void addNote(NoteSectionRef noteSectionRef) throws IOException {
         getNoteBookByUUID(noteSectionRef.getNoteBookRef().getUUID()).addNote(noteSectionRef.getUUID());
+    }
+
+
+    public void addNoteBook(String name) throws IOException {
+        boolean nameOk = true;
+        synchronized (noteBooks) {
+            for (Map.Entry<String, NoteBook> entry : noteBooks.entrySet()) {
+                if (entry.getValue().getName().equals(name)) nameOk=false;
+            }
+            Path toCreate = rootDir.resolve(name);
+            Files.createDirectory(toCreate);
+            NoteBook noteBook = new NoteBook(toCreate);
+            noteBooks.put(noteBook.getUUID(),noteBook);
+            setChanged();
+            notifyObservers(new NewNoteBookEvent(noteBook.getUUID(),noteBook.getName()));
+        }
     }
 
     private Path rootDir ;

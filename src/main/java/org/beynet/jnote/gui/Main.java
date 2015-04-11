@@ -1,6 +1,7 @@
 package org.beynet.jnote.gui;
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.control.Menu;
@@ -12,11 +13,13 @@ import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.beynet.jnote.controler.Controller;
+import org.beynet.jnote.gui.dialogs.Alert;
 import org.beynet.jnote.gui.dialogs.NoteBookName;
 import org.beynet.jnote.gui.tabs.MainPanel;
 import org.beynet.jnote.model.Model;
 import org.beynet.jnote.utils.I18NHelper;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ResourceBundle;
@@ -78,15 +81,6 @@ public class Main extends Application {
         pane.setTop(bar);
 
         final Menu file = new Menu(labelResourceBundle.getString("file"));
-        // exit menu item
-        // --------------
-        {
-            final MenuItem exit = new MenuItem(labelResourceBundle.getString("exit"));
-            exit.setOnAction((evt) -> {
-                exitApplication();
-            });
-            file.getItems().add(exit);
-        }
 
         // add note book menu item
         // -----------------------
@@ -98,6 +92,18 @@ public class Main extends Application {
             file.getItems().add(addNoteBook);
         }
 
+
+        // exit menu item
+        // --------------
+        {
+            final MenuItem exit = new MenuItem(labelResourceBundle.getString("exit"));
+            exit.setOnAction((evt) -> {
+                exitApplication();
+            });
+            file.getItems().add(exit);
+        }
+
+
         // add all menu
         // ------------
         bar.getMenus().add(file);
@@ -106,13 +112,8 @@ public class Main extends Application {
     }
 
     private void addNewNoteBook() {
-        String noteBookName;
         NoteBookName noteBookNameDialog = new NoteBookName(currentStage, new Double(300), new Double(60));
         noteBookNameDialog.show();
-        final String name = noteBookNameDialog.getName();
-        if (name !=null) {
-            //Controller.addNoteBook(noteBookName);
-        }
     }
 
     private void exitApplication() {
