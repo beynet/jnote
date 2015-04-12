@@ -53,6 +53,10 @@ public class Main extends Application {
         pane.setBottom(null);
         currentStage.setScene(currentScene);
         currentStage.show();
+
+        currentStage.setOnCloseRequest(event -> {
+            exitApplication();
+        });
     }
 
     private void addMainPane(BorderPane pane) {
