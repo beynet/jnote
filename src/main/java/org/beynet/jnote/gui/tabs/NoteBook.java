@@ -7,8 +7,10 @@ import javafx.scene.input.MouseEvent;
 import javafx.stage.Stage;
 import org.beynet.jnote.controler.Controller;
 import org.beynet.jnote.controler.NoteBookRef;
+import org.beynet.jnote.gui.dialogs.Alert;
 import org.beynet.jnote.model.events.*;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Observable;
@@ -65,7 +67,11 @@ public class NoteBook extends TabPane implements Observer ,ModelEventVisitor {
 
     public void createNewNoteSection() {
         if (currentNoteBook!=null) {
-            Controller.createNewSection(currentNoteBook);
+            try {
+                Controller.createNewSection(currentNoteBook);
+            } catch (IOException e) {
+                new Alert(currentStage,"unable to create new section "+e.getMessage()).show();
+            }
         }
     }
 

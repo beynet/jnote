@@ -41,8 +41,8 @@ public class NoteSection extends Tab implements Observer,ModelEventVisitor {
             try {
                 Controller.changeSectionName(noteBookRef, UUID, fieldTitle.getText());
             } catch (IOException e) {
-                //TODO : show an alert
-                logger.error("unable to modify section name");
+                logger.error("unable to change section name",e);
+                new org.beynet.jnote.gui.dialogs.Alert(currentStage,"unable to modify section name "+e.getMessage()).show();
             }
         });
         HBox hbox = new HBox();

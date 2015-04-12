@@ -31,7 +31,7 @@ public class NoteBook extends Observable {
 
     @Override
     public synchronized void addObserver(Observer o) {
-        logger.debug("new observer");
+        logger.debug("add observer to notebook "+getName());
         super.addObserver(o);
         // we send to this new observer our section list
         synchronized (sectionsMap) {
@@ -44,7 +44,7 @@ public class NoteBook extends Observable {
     @Override
     public synchronized void deleteObserver(Observer o) {
         super.deleteObserver(o);
-        logger.debug("remove observer");
+        logger.debug("delete observer to notebook "+getName());
     }
 
     /**
@@ -77,10 +77,11 @@ public class NoteBook extends Observable {
      * @return
      * @throws IllegalArgumentException
      */
-    private NoteSection _addSection(String sectionName) throws IllegalArgumentException {
+    private NoteSection _addSection(String sectionName) throws IllegalArgumentException, IOException {
         logger.debug("add note section name=" + sectionName + " to note book " + path.getFileName());
         NoteSection noteSection = NoteSection.fromZipFile(path.resolve(sectionName+".zip"));
         addSection(noteSection);
+        noteSection.save();
         return noteSection;
     }
 
@@ -90,7 +91,7 @@ public class NoteBook extends Observable {
      * @return
      * @throws IllegalArgumentException : if section name already exists
      */
-    public NoteSection addSection(String sectionName) throws IllegalArgumentException {
+    public NoteSection addSection(String sectionName) throws IllegalArgumentException, IOException {
         synchronized (sectionsMap) {
             if (nameExist(sectionName)) throw new IllegalArgumentException("section name already exists");
             return _addSection(sectionName);
@@ -110,7 +111,7 @@ public class NoteBook extends Observable {
      * @return
      * @throws IllegalArgumentException
      */
-    public NoteSection addSection() throws IllegalArgumentException {
+    public NoteSection addSection() throws IllegalArgumentException, IOException {
         String newSectionName ="NEW SECTION";
         int i = 0;
         synchronized (sectionsMap) {

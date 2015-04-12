@@ -35,7 +35,7 @@ public class Controller {
         Model.getInstance().unSubscribeToNoteSection(noteSectionRef.getNoteBookRef().getUUID(), noteSectionRef.getUUID(), observer);
     }
 
-    public static void createNewSection(NoteBookRef noteBook) {
+    public static void createNewSection(NoteBookRef noteBook) throws IOException {
         Model.getInstance().createNewSection(noteBook.getUUID());
     }
 

@@ -123,7 +123,7 @@ public class Model extends Observable implements FileVisitor<Path> {
         return noteBook;
     }
 
-    public void createNewSection(String noteBookUUID) {
+    public void createNewSection(String noteBookUUID) throws IOException {
         getNoteBookByUUID(noteBookUUID).addSection();
     }
     public void saveNoteContent(String noteBookUUID, String sectionUUID, String noteUUID, String content) throws IOException{
