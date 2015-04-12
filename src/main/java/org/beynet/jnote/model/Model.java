@@ -73,7 +73,7 @@ public class Model extends Observable implements FileVisitor<Path> {
     public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
         if (depth==1) {
             if (file.getFileName().toString().endsWith(".zip")) {
-                currentNoteBook.addSection(file.getFileName());
+                currentNoteBook.addZipFile(file.getFileName());
             }
         }
         return FileVisitResult.CONTINUE;
@@ -124,7 +124,7 @@ public class Model extends Observable implements FileVisitor<Path> {
     }
 
     public void createNewSection(String noteBookUUID) throws IOException {
-        getNoteBookByUUID(noteBookUUID).addSection();
+        getNoteBookByUUID(noteBookUUID).addSectionToMap();
     }
     public void saveNoteContent(String noteBookUUID, String sectionUUID, String noteUUID, String content) throws IOException{
         getNoteBookByUUID(noteBookUUID).saveNoteContent(sectionUUID, noteUUID, content);

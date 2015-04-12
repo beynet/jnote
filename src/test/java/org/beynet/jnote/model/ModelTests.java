@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -75,8 +74,8 @@ public class ModelTests extends DefaultTest{
         Path nb1 = root.resolve("nb1");
         Files.createDirectories(nb1);
         NoteBook nb = new NoteBook(nb1);
-        NoteSection section1 = nb.addSection(name);
-        NoteSection section2 = nb.addSection(name);
+        NoteSection section1 = nb.addSectionToMap(name);
+        NoteSection section2 = nb.addSectionToMap(name);
 
     }
 

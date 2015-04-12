@@ -2,7 +2,6 @@ package org.beynet.jnote.model;
 
 import org.apache.log4j.Logger;
 import org.beynet.jnote.controler.NoteRef;
-import org.beynet.jnote.model.events.NoteRenamed;
 import org.beynet.jnote.model.events.NoteSectionAdded;
 import org.beynet.jnote.model.events.SectionRenamed;
 
@@ -48,10 +47,10 @@ public class NoteBook extends Observable {
     }
 
     /**
-     *
+     * add section to map and notify observers
      * @param section
      */
-    private void addSection(NoteSection section) {
+    private void addSectionToMap(NoteSection section) {
         sectionsMap.put(section.getUUID(), section);
         setChanged();
         //FIXME : here
@@ -64,23 +63,23 @@ public class NoteBook extends Observable {
      * @return
      * @throws IllegalArgumentException
      */
-    NoteSection addSection(Path filePath) throws IllegalArgumentException {
-        logger.debug("add note section " + filePath.toString() + " to note book " + path.getFileName());
+    NoteSection addZipFile(Path filePath) throws IllegalArgumentException {
+        logger.debug("add existing note section " + filePath.toString() + " to note book " + path.getFileName());
         NoteSection noteSection = NoteSection.fromZipFile(path.resolve(filePath));
-        addSection(noteSection);
+        addSectionToMap(noteSection);
         return noteSection;
     }
 
     /**
-     * add a new section
+     * create a new section and add it to current map
      * @param sectionName
      * @return
      * @throws IllegalArgumentException
      */
     private NoteSection _addSection(String sectionName) throws IllegalArgumentException, IOException {
-        logger.debug("add note section name=" + sectionName + " to note book " + path.getFileName());
+        logger.debug("add new note section name=" + sectionName + " to note book " + path.getFileName());
         NoteSection noteSection = NoteSection.fromZipFile(path.resolve(sectionName+".zip"));
-        addSection(noteSection);
+        addSectionToMap(noteSection);
         noteSection.save();
         return noteSection;
     }
@@ -91,7 +90,7 @@ public class NoteBook extends Observable {
      * @return
      * @throws IllegalArgumentException : if section name already exists
      */
-    public NoteSection addSection(String sectionName) throws IllegalArgumentException, IOException {
+    public NoteSection addSectionToMap(String sectionName) throws IllegalArgumentException, IOException {
         synchronized (sectionsMap) {
             if (nameExist(sectionName)) throw new IllegalArgumentException("section name already exists");
             return _addSection(sectionName);
@@ -111,7 +110,7 @@ public class NoteBook extends Observable {
      * @return
      * @throws IllegalArgumentException
      */
-    public NoteSection addSection() throws IllegalArgumentException, IOException {
+    public NoteSection addSectionToMap() throws IllegalArgumentException, IOException {
         String newSectionName ="NEW SECTION";
         int i = 0;
         synchronized (sectionsMap) {
