@@ -1,8 +1,10 @@
 package org.beynet.jnote.model;
 
 import org.apache.log4j.Logger;
+import org.beynet.jnote.controler.NoteRef;
 import org.beynet.jnote.model.events.NoteAdded;
 import org.beynet.jnote.model.events.NoteContentChanged;
+import org.beynet.jnote.model.events.NoteDeleted;
 import org.beynet.jnote.model.events.NoteRenamed;
 import org.xml.sax.InputSource;
 
@@ -235,6 +237,32 @@ public class NoteSection extends Observable {
         notifyObservers(new NoteAdded(note.getUUID(),note.getName(),note.getContent()));
     }
 
+    /**
+     * remove a note from current section
+     * @param noteRef
+     */
+    public void delNote(NoteRef noteRef) throws IOException {
+        for (Note note : getNotes()) {
+            if (note.getUUID().equals(noteRef.getUUID())) {
+                getNotes().remove(note);
+                save();
+                setChanged();
+                notifyObservers(new NoteDeleted(note.getUUID()));
+                break;
+            }
+        }
+    }
+
+    public void saveNoteContent(String noteUUID,String content) throws IOException {
+        //FIXME : protect from MT
+        for (Note n :getNotes()) {
+            if (n.getUUID().equals(noteUUID)) n.setContent(content);
+        }
+        save();
+        setChanged();
+        notifyObservers(new NoteContentChanged(getUUID(),noteUUID,content));
+    }
+
     private long   modified ;
     private long   created  ;
     private List<Note> notes = new ArrayList<>();
@@ -252,13 +280,6 @@ public class NoteSection extends Observable {
         }
     }
 
-    public void saveNoteContent(String noteUUID,String content) throws IOException {
-        //FIXME : protect from MT
-        for (Note n :getNotes()) {
-            if (n.getUUID().equals(noteUUID)) n.setContent(content);
-        }
-        save();
-        setChanged();
-        notifyObservers(new NoteContentChanged(getUUID(),noteUUID,content));
-    }
+
+
 }

@@ -63,4 +63,8 @@ public class Controller {
     public static void addNoteBook(String name) throws IOException{
         Model.getInstance().addNoteBook(name);
     }
+
+    public static void delNote(NoteRef noteRef) throws IOException {
+        Model.getInstance().delNote(noteRef);
+    }
 }

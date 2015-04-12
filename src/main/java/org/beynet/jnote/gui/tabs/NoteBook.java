@@ -18,7 +18,8 @@ import java.util.Observer;
  * Created by beynet on 05/04/2015.
  */
 public class NoteBook extends TabPane implements Observer ,ModelEventVisitor {
-    public NoteBook() {
+    public NoteBook(Stage currentStage) {
+        this.currentStage=currentStage;
         this.addNoteTab = new AddNoteTab();
         setOnMouseClicked(event -> {
             checkClick(event);
@@ -72,7 +73,7 @@ public class NoteBook extends TabPane implements Observer ,ModelEventVisitor {
 
     @Override
     public void visit(NoteSectionAdded event) {
-        NoteSection section = new NoteSection(currentNoteBook,event.getName(),event.getUUID());
+        NoteSection section = new NoteSection(currentStage,currentNoteBook,event.getName(),event.getUUID());
         Platform.runLater(() -> addSection(section));
     }
 
@@ -114,7 +115,13 @@ public class NoteBook extends TabPane implements Observer ,ModelEventVisitor {
 
     }
 
+    @Override
+    public void visit(NoteDeleted noteDeleted) {
+
+    }
+
     private AddNoteTab addNoteTab;
+    private Stage currentStage;
     private List<NoteSection> mySections = new ArrayList<>();
     private NoteBookRef currentNoteBook ;
 }

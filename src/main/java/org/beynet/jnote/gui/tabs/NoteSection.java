@@ -4,6 +4,7 @@ import javafx.application.Platform;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.web.HTMLEditor;
+import javafx.stage.Stage;
 import org.apache.log4j.Logger;
 import org.beynet.jnote.controler.Controller;
 import org.beynet.jnote.controler.NoteBookRef;
@@ -20,7 +21,8 @@ import java.util.Observer;
  */
 public class NoteSection extends Tab implements Observer,ModelEventVisitor {
 
-    public NoteSection(NoteBookRef noteBookRef,String name,String UUID) {
+    public NoteSection(Stage currentStage,NoteBookRef noteBookRef,String name,String UUID) {
+        this.currentStage = currentStage;
         this.UUID = UUID;
         this.noteSectionRef = new NoteSectionRef(noteBookRef,UUID,name);
         labeltitle = new Label(name);
@@ -46,7 +48,7 @@ public class NoteSection extends Tab implements Observer,ModelEventVisitor {
         HBox hbox = new HBox();
 
 
-        noteList = new NoteList(noteSectionRef);
+        noteList = new NoteList(this.currentStage,noteSectionRef);
         content = new HTMLEditor();
         content.setDisable(true);
         hbox.getChildren().add(content);
@@ -180,11 +182,24 @@ public class NoteSection extends Tab implements Observer,ModelEventVisitor {
         }
     }
 
+    @Override
+    public void visit(NoteDeleted noteDeleted) {
+        for (NoteListItem n:noteList.getList()) {
+            if (n.getNoteRef().getUUID().equals(noteDeleted.getUUID())) {
+                Platform.runLater(()->{
+                    noteList.getList().remove(n);
+                });
+                break;
+            }
+        }
+    }
+
     private HTMLEditor content;
     private String UUID;
     private NoteSectionRef noteSectionRef;
     private Label labeltitle ;
     private TextField fieldTitle ;
+    private Stage currentStage;
 
     private NoteList noteList;
 

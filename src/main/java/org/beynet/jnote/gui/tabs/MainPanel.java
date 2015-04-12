@@ -19,9 +19,10 @@ import java.util.Observer;
  * Created by beynet on 07/04/15.
  */
 public class MainPanel extends VBox implements Observer,ModelEventVisitor{
-    public MainPanel() {
+    public MainPanel(Stage currentStage) {
+        this.currentStage=currentStage;
         selected =null;
-        notes=new NoteBook();
+        notes=new NoteBook(this.currentStage);
 
         // binding dimensions
         notes.setPrefWidth(getWidth());
@@ -67,6 +68,11 @@ public class MainPanel extends VBox implements Observer,ModelEventVisitor{
     }
 
     @Override
+    public void visit(NoteDeleted noteDeleted) {
+
+    }
+
+    @Override
     public void visit(NewNoteBookEvent newNoteBookEvent) {
         Platform.runLater(()->{
             noteBooksList.add(new NoteBookRef(newNoteBookEvent.getUUID(),newNoteBookEvent.getName()));
@@ -97,5 +103,5 @@ public class MainPanel extends VBox implements Observer,ModelEventVisitor{
     private ComboBox<NoteBookRef> noteBooks ;
     private NoteBook notes;
     private NoteBookRef selected;
-
+    private Stage currentStage;
 }

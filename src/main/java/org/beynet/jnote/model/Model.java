@@ -1,6 +1,7 @@
 package org.beynet.jnote.model;
 
 import org.apache.log4j.Logger;
+import org.beynet.jnote.controler.NoteRef;
 import org.beynet.jnote.controler.NoteSectionRef;
 import org.beynet.jnote.model.events.NewNoteBookEvent;
 import org.beynet.jnote.model.events.OnExitEvent;
@@ -158,6 +159,9 @@ public class Model extends Observable implements FileVisitor<Path> {
             setChanged();
             notifyObservers(new NewNoteBookEvent(noteBook.getUUID(),noteBook.getName()));
         }
+    }
+    public void delNote(NoteRef noteRef) throws IOException {
+        getNoteBookByUUID(noteRef.getNoteSectionRef().getNoteBookRef().getUUID()).delNote(noteRef);
     }
 
     private Path rootDir ;

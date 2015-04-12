@@ -11,6 +11,9 @@ import java.io.IOException;
  * Created by beynet on 08/04/15.
  */
 public class NoteListCell extends ListCell<NoteListItem> {
+    public NoteListCell() {
+
+    }
 
     @Override
     protected void updateItem(NoteListItem item, boolean empty) {

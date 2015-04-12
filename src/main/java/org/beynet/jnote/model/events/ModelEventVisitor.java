@@ -17,4 +17,6 @@ public interface ModelEventVisitor {
     void visit(NoteRenamed noteRenamed);
 
     void visit(NoteContentChanged noteContentChanged);
+
+    void visit(NoteDeleted noteDeleted);
 }

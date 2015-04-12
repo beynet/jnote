@@ -1,6 +1,7 @@
 package org.beynet.jnote.model;
 
 import org.apache.log4j.Logger;
+import org.beynet.jnote.controler.NoteRef;
 import org.beynet.jnote.model.events.NoteRenamed;
 import org.beynet.jnote.model.events.NoteSectionAdded;
 import org.beynet.jnote.model.events.SectionRenamed;
@@ -157,9 +158,14 @@ public class NoteBook extends Observable {
     public void addNote(String sectionUUID) throws IOException {
         getSectionByUUID(sectionUUID).addNote();
     }
+    public void delNote(NoteRef noteRef) throws IOException {
+        NoteSection section = getSectionByUUID(noteRef.getNoteSectionRef().getUUID());
+        section.delNote(noteRef);
+    }
 
     private Path path;
     protected Map<String,NoteSection> sectionsMap = new HashMap<>();
     private final static Logger logger = Logger.getLogger(NoteBook.class);
     private final String UUID;
+
 }
