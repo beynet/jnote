@@ -12,11 +12,13 @@ import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.beynet.jnote.controler.Controller;
+import org.beynet.jnote.gui.dialogs.Alert;
 import org.beynet.jnote.gui.dialogs.NoteBookName;
 import org.beynet.jnote.gui.tabs.MainPanel;
 import org.beynet.jnote.model.Model;
 import org.beynet.jnote.utils.I18NHelper;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ResourceBundle;
@@ -62,16 +64,16 @@ public class Main extends Application {
     private void addMainPane(BorderPane pane) {
         //Notes tabs = new Notes();
         //pane.setCenter(tabs);
-        MainPanel mainPanel = new MainPanel(currentStage);
+        mainPanel = new MainPanel(currentStage);
         pane.setCenter(mainPanel);
         mainPanel.setPrefWidth(currentStage.getWidth());
         currentStage.widthProperty().addListener((observable, oldValue, newValue) -> {
             mainPanel.setPrefWidth(currentStage.getWidth());
         });
 
-        mainPanel.setPrefHeight(currentStage.getHeight()-bar.getHeight());
+        mainPanel.setPrefHeight(currentStage.getHeight() - bar.getHeight());
         currentStage.heightProperty().addListener((observable, oldValue, newValue) -> {
-            mainPanel.setPrefHeight(currentStage.getHeight()-bar.getHeight());
+            mainPanel.setPrefHeight(currentStage.getHeight() - bar.getHeight());
         });
     }
 
@@ -91,6 +93,16 @@ public class Main extends Application {
                 addNewNoteBook();
             });
             file.getItems().add(addNoteBook);
+        }
+
+        // delete current notebook
+        // ------------------------
+        {
+            final MenuItem deleteNoteBook = new MenuItem(labelResourceBundle.getString("deleteNoteBook"));
+            deleteNoteBook.setOnAction((evt) -> {
+                deleteNoteBook();
+            });
+            file.getItems().add(deleteNoteBook);
         }
 
 
@@ -117,6 +129,15 @@ public class Main extends Application {
         noteBookNameDialog.show();
     }
 
+    private void deleteNoteBook() {
+        try {
+            Controller.delNoteBook(mainPanel.getSelectedNoteBookUUID());
+        } catch (IOException e) {
+            logger.error("unable to delete note book",e);
+            new Alert(currentStage,"unable to delete note book "+e.getMessage()).show();
+        }
+    }
+
     private void exitApplication() {
         logger.debug("on exit");
         Controller.onExit();
@@ -126,6 +147,7 @@ public class Main extends Application {
     private Stage currentStage ;
     private Scene currentScene ;
     private MenuBar bar;
+    private MainPanel mainPanel;
 
     private final static Logger logger = Logger.getLogger(Main.class);
 }

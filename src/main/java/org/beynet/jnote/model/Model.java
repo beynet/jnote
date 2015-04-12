@@ -3,8 +3,8 @@ package org.beynet.jnote.model;
 import org.apache.log4j.Logger;
 import org.beynet.jnote.controler.NoteRef;
 import org.beynet.jnote.controler.NoteSectionRef;
-import org.beynet.jnote.model.events.NewNoteBookEvent;
-import org.beynet.jnote.model.events.OnExitEvent;
+import org.beynet.jnote.model.events.model.NewNoteBookEvent;
+import org.beynet.jnote.model.events.model.OnExitEvent;
 
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
@@ -164,6 +164,10 @@ public class Model extends Observable implements FileVisitor<Path> {
         getNoteBookByUUID(noteRef.getNoteSectionRef().getNoteBookRef().getUUID()).delNote(noteRef);
     }
 
+    public void delNoteBook(String noteBookUUID) throws IOException {
+        NoteBook noteBookByUUID = getNoteBookByUUID(noteBookUUID);
+        noteBookByUUID.delete();
+    }
     private Path rootDir ;
     private long depth ;
     Map<String,NoteBook> noteBooks ;

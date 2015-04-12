@@ -1,9 +1,12 @@
-package org.beynet.jnote.model.events;
+package org.beynet.jnote.model.events.notebook;
+
+import org.beynet.jnote.model.events.notebook.NoteBookEvent;
+import org.beynet.jnote.model.events.notebook.NoteBookEventVisitor;
 
 /**
  * Created by beynet on 07/04/15.
  */
-public class SectionRenamed implements ModelEvent {
+public class SectionRenamed implements NoteBookEvent {
 
     private final String name;
     private final String UUID;
@@ -22,7 +25,7 @@ public class SectionRenamed implements ModelEvent {
     }
 
     @Override
-    public void accept(ModelEventVisitor visitor) {
+    public void accept(NoteBookEventVisitor visitor) {
         visitor.visit(this);
     }
 }

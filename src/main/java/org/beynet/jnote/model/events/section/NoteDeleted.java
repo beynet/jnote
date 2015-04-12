@@ -1,9 +1,9 @@
-package org.beynet.jnote.model.events;
+package org.beynet.jnote.model.events.section;
 
 /**
  * Created by beynet on 07/04/15.
  */
-public class NoteDeleted implements ModelEvent {
+public class NoteDeleted implements SectionEvent {
 
     private final String UUID;
 
@@ -16,7 +16,7 @@ public class NoteDeleted implements ModelEvent {
     }
 
     @Override
-    public void accept(ModelEventVisitor visitor) {
+    public void accept(SectionEventVisitor visitor) {
         visitor.visit(this);
     }
 }

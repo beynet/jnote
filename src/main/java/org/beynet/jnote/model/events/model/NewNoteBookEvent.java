@@ -1,4 +1,7 @@
-package org.beynet.jnote.model.events;
+package org.beynet.jnote.model.events.model;
+
+import org.beynet.jnote.model.events.notebook.NoteBookEvent;
+import org.beynet.jnote.model.events.notebook.NoteBookEventVisitor;
 
 /**
  * Created by beynet on 07/04/15.

@@ -10,7 +10,15 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import org.beynet.jnote.controler.Controller;
 import org.beynet.jnote.controler.NoteBookRef;
-import org.beynet.jnote.model.events.*;
+import org.beynet.jnote.model.events.model.ModelEvent;
+import org.beynet.jnote.model.events.model.ModelEventVisitor;
+import org.beynet.jnote.model.events.model.NewNoteBookEvent;
+import org.beynet.jnote.model.events.model.OnExitEvent;
+import org.beynet.jnote.model.events.notebook.*;
+import org.beynet.jnote.model.events.section.NoteAdded;
+import org.beynet.jnote.model.events.section.NoteContentChanged;
+import org.beynet.jnote.model.events.section.NoteDeleted;
+import org.beynet.jnote.model.events.section.NoteRenamed;
 
 import java.util.Observable;
 import java.util.Observer;
@@ -18,7 +26,7 @@ import java.util.Observer;
 /**
  * Created by beynet on 07/04/15.
  */
-public class MainPanel extends VBox implements Observer,ModelEventVisitor{
+public class MainPanel extends VBox implements Observer,ModelEventVisitor {
     public MainPanel(Stage currentStage) {
         this.currentStage=currentStage;
         selected =null;
@@ -51,26 +59,16 @@ public class MainPanel extends VBox implements Observer,ModelEventVisitor{
         });
     }
 
+    public String getSelectedNoteBookUUID() {
+        return selected.getUUID();
+    }
+
 
     @Override
     public void update(Observable o, Object arg) {
         ((ModelEvent)arg).accept(this);
     }
 
-    @Override
-    public void visit(NoteSectionAdded event) {
-        // NOTHING TO DO
-    }
-
-    @Override
-    public void visit(NoteRenamed noteRenamed) {
-
-    }
-
-    @Override
-    public void visit(NoteDeleted noteDeleted) {
-
-    }
 
     @Override
     public void visit(NewNoteBookEvent newNoteBookEvent) {
@@ -80,24 +78,10 @@ public class MainPanel extends VBox implements Observer,ModelEventVisitor{
     }
 
     @Override
-    public void visit(SectionRenamed sectionRenamed) {
-        // NOTHING TO DO
-    }
-
-    @Override
     public void visit(OnExitEvent onExitEvent) {
-        notes.visit(onExitEvent);
+        notes.onExit();
     }
 
-    @Override
-    public void visit(NoteAdded noteAdded) {
-
-    }
-
-    @Override
-    public void visit(NoteContentChanged noteContentChanged) {
-
-    }
 
     private ObservableList<NoteBookRef> noteBooksList ;
     private ComboBox<NoteBookRef> noteBooks ;

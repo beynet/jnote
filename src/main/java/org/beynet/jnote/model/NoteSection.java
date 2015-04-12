@@ -2,10 +2,10 @@ package org.beynet.jnote.model;
 
 import org.apache.log4j.Logger;
 import org.beynet.jnote.controler.NoteRef;
-import org.beynet.jnote.model.events.NoteAdded;
-import org.beynet.jnote.model.events.NoteContentChanged;
-import org.beynet.jnote.model.events.NoteDeleted;
-import org.beynet.jnote.model.events.NoteRenamed;
+import org.beynet.jnote.model.events.section.NoteAdded;
+import org.beynet.jnote.model.events.section.NoteContentChanged;
+import org.beynet.jnote.model.events.section.NoteDeleted;
+import org.beynet.jnote.model.events.section.NoteRenamed;
 import org.xml.sax.InputSource;
 
 import javax.xml.bind.JAXBContext;
@@ -25,7 +25,7 @@ import java.nio.file.Path;
 import java.util.*;
 
 /**
- * A note section is a list of notes
+ * A note section is a list of notebook
  */
 @XmlRootElement(name = "NoteSection")
 public class NoteSection extends Observable {
@@ -251,6 +251,11 @@ public class NoteSection extends Observable {
                 break;
             }
         }
+    }
+
+    public void delete() throws IOException {
+        logger.debug("deleting section "+getName());
+        Files.delete(getPath());
     }
 
     public void saveNoteContent(String noteUUID,String content) throws IOException {

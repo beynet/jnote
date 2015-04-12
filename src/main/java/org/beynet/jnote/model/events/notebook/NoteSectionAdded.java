@@ -1,11 +1,12 @@
-package org.beynet.jnote.model.events;
+package org.beynet.jnote.model.events.notebook;
 
-import org.beynet.jnote.controler.NoteSectionRef;
+import org.beynet.jnote.model.events.notebook.NoteBookEvent;
+import org.beynet.jnote.model.events.notebook.NoteBookEventVisitor;
 
 /**
  * Created by beynet on 07/04/15.
  */
-public class NoteSectionAdded implements ModelEvent {
+public class NoteSectionAdded implements NoteBookEvent {
     private final String UUID;
     private final String name;
 
@@ -23,7 +24,7 @@ public class NoteSectionAdded implements ModelEvent {
     }
 
     @Override
-    public void accept(ModelEventVisitor visitor) {
+    public void accept(NoteBookEventVisitor visitor) {
         visitor.visit(this);
     }
 

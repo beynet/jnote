@@ -2,8 +2,9 @@ package org.beynet.jnote.model;
 
 import org.apache.log4j.Logger;
 import org.beynet.jnote.controler.NoteRef;
-import org.beynet.jnote.model.events.NoteSectionAdded;
-import org.beynet.jnote.model.events.SectionRenamed;
+import org.beynet.jnote.model.events.notebook.NoteSectionAdded;
+import org.beynet.jnote.model.events.notebook.NoteSectionDeleted;
+import org.beynet.jnote.model.events.notebook.SectionRenamed;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -43,7 +44,7 @@ public class NoteBook extends Observable {
     @Override
     public synchronized void deleteObserver(Observer o) {
         super.deleteObserver(o);
-        logger.debug("delete observer to notebook "+getName());
+        logger.debug("delete observer to notebook " + getName());
     }
 
     /**
@@ -161,6 +162,18 @@ public class NoteBook extends Observable {
     public void delNote(NoteRef noteRef) throws IOException {
         NoteSection section = getSectionByUUID(noteRef.getNoteSectionRef().getUUID());
         section.delNote(noteRef);
+    }
+    public void delete() throws IOException {
+        synchronized (sectionsMap) {
+            for (NoteSection section : sectionsMap.values()) {
+                section.delete();
+                setChanged();
+                notifyObservers(new NoteSectionDeleted(section.getUUID(),true));
+            }
+            sectionsMap.clear();
+        }
+        //Files.delete(path);
+        // TODO notify notebook deleted
     }
 
     private Path path;

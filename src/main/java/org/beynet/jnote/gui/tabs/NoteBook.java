@@ -8,7 +8,13 @@ import javafx.stage.Stage;
 import org.beynet.jnote.controler.Controller;
 import org.beynet.jnote.controler.NoteBookRef;
 import org.beynet.jnote.gui.dialogs.Alert;
-import org.beynet.jnote.model.events.*;
+import org.beynet.jnote.model.events.model.NewNoteBookEvent;
+import org.beynet.jnote.model.events.model.OnExitEvent;
+import org.beynet.jnote.model.events.notebook.*;
+import org.beynet.jnote.model.events.section.NoteAdded;
+import org.beynet.jnote.model.events.section.NoteContentChanged;
+import org.beynet.jnote.model.events.section.NoteDeleted;
+import org.beynet.jnote.model.events.section.NoteRenamed;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -19,7 +25,7 @@ import java.util.Observer;
 /**
  * Created by beynet on 05/04/2015.
  */
-public class NoteBook extends TabPane implements Observer ,ModelEventVisitor {
+public class NoteBook extends TabPane implements Observer ,NoteBookEventVisitor {
     public NoteBook(Stage currentStage) {
         this.currentStage=currentStage;
         this.addNoteTab = new AddNoteTab();
@@ -61,7 +67,7 @@ public class NoteBook extends TabPane implements Observer ,ModelEventVisitor {
     @Override
     public void update(Observable o, Object arg) {
         if (o instanceof org.beynet.jnote.model.NoteBook) {
-            if (arg!=null) ((ModelEvent)arg).accept(this);
+            if (arg!=null) ((NoteBookEvent)arg).accept(this);
         }
     }
 
@@ -76,6 +82,26 @@ public class NoteBook extends TabPane implements Observer ,ModelEventVisitor {
     }
 
 
+    @Override
+    public void visit(NoteSectionDeleted noteSectionDeleted) {
+        Platform.runLater(()->{
+            if (addNoteTab!=null && noteSectionDeleted.isRemoveBook()) {
+                getTabs().remove(addNoteTab);
+                addNoteTab=null;
+            }
+            for (Tab tab:getTabs()) {
+                if (tab instanceof NoteSection) {
+                    NoteSection noteSection = (NoteSection) tab;
+                    if (noteSection.match(noteSectionDeleted.getUUID())) {
+                        noteSection.delete();
+                        getTabs().remove(tab);
+                        getSelectionModel().selectFirst();
+                        break;
+                    }
+                }
+            }
+        });
+    }
 
     @Override
     public void visit(NoteSectionAdded event) {
@@ -94,37 +120,14 @@ public class NoteBook extends TabPane implements Observer ,ModelEventVisitor {
         });
     }
 
-    @Override
-    public void visit(OnExitEvent onExitEvent) {
+
+    public void onExit() {
         final Tab selectedItem = getSelectionModel().getSelectedItem();
         if (selectedItem==null) return;
         if (selectedItem instanceof NoteSection) ((NoteSection)selectedItem).save();
     }
 
-    @Override
-    public void visit(NewNoteBookEvent newNoteBookEvent) {
-        // NOT INTERESTED BY IT
-    }
 
-    @Override
-    public void visit(NoteAdded noteAdded) {
-
-    }
-
-    @Override
-    public void visit(NoteRenamed noteRenamed) {
-
-    }
-
-    @Override
-    public void visit(NoteContentChanged noteContentChanged) {
-
-    }
-
-    @Override
-    public void visit(NoteDeleted noteDeleted) {
-
-    }
 
     private AddNoteTab addNoteTab;
     private Stage currentStage;

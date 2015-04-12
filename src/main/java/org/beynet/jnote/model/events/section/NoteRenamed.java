@@ -1,9 +1,9 @@
-package org.beynet.jnote.model.events;
+package org.beynet.jnote.model.events.section;
 
 /**
  * Created by beynet on 08/04/15.
  */
-public class NoteRenamed implements ModelEvent {
+public class NoteRenamed implements SectionEvent {
     private final String sectionUUID;
     private final String noteUUID;
     private final String name;
@@ -23,7 +23,7 @@ public class NoteRenamed implements ModelEvent {
     }
 
     @Override
-    public void accept(ModelEventVisitor visitor) {
+    public void accept(SectionEventVisitor visitor) {
         visitor.visit(this);
     }
     public String getName() {

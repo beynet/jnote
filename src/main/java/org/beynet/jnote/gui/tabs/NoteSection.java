@@ -10,7 +10,10 @@ import org.beynet.jnote.controler.Controller;
 import org.beynet.jnote.controler.NoteBookRef;
 import org.beynet.jnote.controler.NoteRef;
 import org.beynet.jnote.controler.NoteSectionRef;
-import org.beynet.jnote.model.events.*;
+import org.beynet.jnote.model.events.model.NewNoteBookEvent;
+import org.beynet.jnote.model.events.model.OnExitEvent;
+import org.beynet.jnote.model.events.notebook.*;
+import org.beynet.jnote.model.events.section.*;
 
 import java.io.IOException;
 import java.util.Observable;
@@ -19,7 +22,7 @@ import java.util.Observer;
 /**
  * Created by beynet on 05/04/2015.
  */
-public class NoteSection extends Tab implements Observer,ModelEventVisitor {
+public class NoteSection extends Tab implements Observer,SectionEventVisitor {
 
     public NoteSection(Stage currentStage,NoteBookRef noteBookRef,String name,String UUID) {
         this.currentStage = currentStage;
@@ -93,10 +96,26 @@ public class NoteSection extends Tab implements Observer,ModelEventVisitor {
                 save();
                 while (noteList.getList().size()>0) noteList.getList().remove(0);
             } else {
-                Controller.subscribeToNoteSection(noteSectionRef, this);
+                try {
+                    Controller.subscribeToNoteSection(noteSectionRef, this);
+                }catch(IllegalArgumentException e) {
+                    // section is being removed
+                }
             }
         });
 
+    }
+
+
+
+    public void delete() {
+        setOnSelectionChanged(null);
+    }
+
+
+    public boolean match(String uuid) {
+        if (noteSectionRef.getUUID().equals(uuid)) return true;
+        return false;
     }
 
     void save() {
@@ -128,30 +147,9 @@ public class NoteSection extends Tab implements Observer,ModelEventVisitor {
 
     @Override
     public void update(Observable o, Object arg) {
-        if (arg!=null && arg instanceof ModelEvent) {
-            ((ModelEvent)arg).accept(this);
+        if (arg!=null && arg instanceof NoteBookEvent) {
+            ((SectionEvent)arg).accept(this);
         }
-    }
-
-
-    @Override
-    public void visit(NoteSectionAdded event) {
-
-    }
-
-    @Override
-    public void visit(NewNoteBookEvent newNoteBookEvent) {
-
-    }
-
-    @Override
-    public void visit(SectionRenamed sectionRenamed) {
-
-    }
-
-    @Override
-    public void visit(OnExitEvent onExitEvent) {
-
     }
 
     @Override
