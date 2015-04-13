@@ -66,7 +66,7 @@ public class NoteBook extends TabPane implements Observer ,NoteBookEventVisitor 
 
     @Override
     public void update(Observable o, Object arg) {
-        if (o instanceof org.beynet.jnote.model.NoteBook) {
+        if (arg instanceof NoteBookEvent) {
             if (arg!=null) ((NoteBookEvent)arg).accept(this);
         }
     }
@@ -84,23 +84,19 @@ public class NoteBook extends TabPane implements Observer ,NoteBookEventVisitor 
 
     @Override
     public void visit(NoteSectionDeleted noteSectionDeleted) {
-        Platform.runLater(()->{
-            if (addNoteTab!=null && noteSectionDeleted.isRemoveBook()) {
-                getTabs().remove(addNoteTab);
-                addNoteTab=null;
-            }
+//        Platform.runLater(()->{
             for (Tab tab:getTabs()) {
                 if (tab instanceof NoteSection) {
                     NoteSection noteSection = (NoteSection) tab;
                     if (noteSection.match(noteSectionDeleted.getUUID())) {
                         noteSection.delete();
                         getTabs().remove(tab);
-                        getSelectionModel().selectFirst();
+                        if (getTabs().size()==1) addNoteTab.skipNextSelectionChange();
                         break;
                     }
                 }
             }
-        });
+//        });
     }
 
     @Override

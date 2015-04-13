@@ -147,14 +147,15 @@ public class NoteSection extends Tab implements Observer,SectionEventVisitor {
 
     @Override
     public void update(Observable o, Object arg) {
-        if (arg!=null && arg instanceof NoteBookEvent) {
+        if (arg!=null && arg instanceof SectionEvent) {
             ((SectionEvent)arg).accept(this);
         }
     }
 
     @Override
     public void visit(NoteAdded noteAdded) {
-        Platform.runLater(()->{
+        System.out.println("new note");
+        Platform.runLater(() -> {
             if (isSelected() == true) {
                 logger.debug("add new note name=" + noteAdded.getName() + " UUID=" + noteAdded.getUUID() + " to section " + noteSectionRef.getSectionName());
                 noteList.getList().add(new NoteListItem(new NoteRef(noteSectionRef, noteAdded.getUUID(), noteAdded.getName(), noteAdded.getContent()), false));
@@ -184,7 +185,7 @@ public class NoteSection extends Tab implements Observer,SectionEventVisitor {
     public void visit(NoteDeleted noteDeleted) {
         for (NoteListItem n:noteList.getList()) {
             if (n.getNoteRef().getUUID().equals(noteDeleted.getUUID())) {
-                Platform.runLater(()->{
+                Platform.runLater(() -> {
                     noteList.getList().remove(n);
                 });
                 break;
@@ -198,7 +199,6 @@ public class NoteSection extends Tab implements Observer,SectionEventVisitor {
     private Label labeltitle ;
     private TextField fieldTitle ;
     private Stage currentStage;
-
     private NoteList noteList;
 
     private final static Logger logger = Logger.getLogger(NoteSection.class);
