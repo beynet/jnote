@@ -26,7 +26,6 @@ public class NoteSection extends Tab implements Observer,SectionEventVisitor {
 
     public NoteSection(Stage currentStage,NoteBookRef noteBookRef,String name,String UUID) {
         this.currentStage = currentStage;
-        this.UUID = UUID;
         this.noteSectionRef = new NoteSectionRef(noteBookRef,UUID,name);
         labeltitle = new Label(name);
         fieldTitle = new TextField();
@@ -74,8 +73,15 @@ public class NoteSection extends Tab implements Observer,SectionEventVisitor {
                 NoteRef noteRef = newValue.getNoteRef();
                 logger.debug("change current note");
                 content.setDisable(false);
-                if (noteRef.getContent()!=null) {
-                    content.setHtmlText(noteRef.getContent());
+                String contentStr = null;
+                try {
+                    contentStr = Controller.getNoteContent(noteRef);
+                } catch (IOException e) {
+                    logger.error("unable to read note content",e);
+                    content.setDisable(true);
+                }
+                if (contentStr!=null) {
+                    content.setHtmlText(contentStr);
                 }
                 else {
                     content.setHtmlText("");
@@ -125,10 +131,10 @@ public class NoteSection extends Tab implements Observer,SectionEventVisitor {
         }
     }
     private void save(NoteRef selectedItem) {
-        logger.debug("saving note content = "+content.getHtmlText());
+        logger.debug("saving note content = "+content.getHtmlText()+" note uuid="+selectedItem.getUUID());
         if (selectedItem!=null) {
             try {
-                Controller.saveNoteContent(noteSectionRef.getNoteBookRef(), UUID, selectedItem.getUUID(), content.getHtmlText());
+                Controller.saveNoteContent(noteSectionRef.getNoteBookRef(), noteSectionRef.getUUID(), selectedItem.getUUID(), content.getHtmlText());
             } catch (IOException e) {
                 //TODO : show an alert
             }
@@ -136,7 +142,7 @@ public class NoteSection extends Tab implements Observer,SectionEventVisitor {
     }
 
     public String getUUID() {
-        return UUID;
+        return noteSectionRef.getUUID();
     }
     public void changeName(String name) {
         System.out.println("CHANGING NAME !!!!!!!!!!!");
@@ -154,11 +160,10 @@ public class NoteSection extends Tab implements Observer,SectionEventVisitor {
 
     @Override
     public void visit(NoteAdded noteAdded) {
-        System.out.println("new note");
         Platform.runLater(() -> {
             if (isSelected() == true) {
                 logger.debug("add new note name=" + noteAdded.getName() + " UUID=" + noteAdded.getUUID() + " to section " + noteSectionRef.getSectionName());
-                noteList.getList().add(new NoteListItem(new NoteRef(noteSectionRef, noteAdded.getUUID(), noteAdded.getName(), noteAdded.getContent()), false));
+                noteList.getList().add(new NoteListItem(new NoteRef(noteSectionRef, noteAdded.getUUID(), noteAdded.getName()), false));
             }
         });
     }
@@ -174,11 +179,7 @@ public class NoteSection extends Tab implements Observer,SectionEventVisitor {
 
     @Override
     public void visit(NoteContentChanged noteContentChanged) {
-        for (NoteListItem n:noteList.getList()) {
-            if (n.getNoteRef().getUUID().equals(noteContentChanged.getNoteUUID())) {
-                n.changeContent(noteContentChanged.getContent());
-            }
-        }
+
     }
 
     @Override
@@ -194,7 +195,6 @@ public class NoteSection extends Tab implements Observer,SectionEventVisitor {
     }
 
     private HTMLEditor content;
-    private String UUID;
     private NoteSectionRef noteSectionRef;
     private Label labeltitle ;
     private TextField fieldTitle ;

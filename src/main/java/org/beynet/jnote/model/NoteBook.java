@@ -17,8 +17,8 @@ public class NoteBook extends Observable {
 
     public NoteBook(Path path) {
         this.path = path ;
-        logger.debug("create new notebook name="+path.getFileName());
         this.UUID = java.util.UUID.randomUUID().toString();
+        logger.debug("create new notebook name="+this.path.getFileName()+" UUID="+this.UUID);
     }
 
     public String getUUID() {
@@ -44,7 +44,7 @@ public class NoteBook extends Observable {
     @Override
     public synchronized void deleteObserver(Observer o) {
         super.deleteObserver(o);
-        logger.debug("delete observer to notebook " + getName());
+        logger.debug("delete observer from notebook " + getName());
     }
 
     /**
@@ -64,9 +64,9 @@ public class NoteBook extends Observable {
      * @return
      * @throws IllegalArgumentException
      */
-    NoteSection addZipFile(Path filePath) throws IllegalArgumentException {
-        logger.debug("add existing note section " + filePath.toString() + " to note book " + path.getFileName());
-        NoteSection noteSection = NoteSection.fromZipFile(path.resolve(filePath));
+    NoteSection addExistingSection(Path filePath) throws IllegalArgumentException {
+        logger.debug("add existing note section path=" + filePath.toString() + " to note book " + path.getFileName());
+        NoteSection noteSection = NoteSection.fromAbsoluteZipFilePath(path.resolve(filePath));
         addSectionToMap(noteSection);
         return noteSection;
     }
@@ -79,7 +79,7 @@ public class NoteBook extends Observable {
      */
     private NoteSection _addSection(String sectionName) throws IllegalArgumentException, IOException {
         logger.debug("add new note section name=" + sectionName + " to note book " + path.getFileName());
-        NoteSection noteSection = NoteSection.fromZipFile(path.resolve(sectionName+".zip"));
+        NoteSection noteSection = NoteSection.fromAbsoluteZipFilePath(path.resolve(sectionName + ".zip"));
         addSectionToMap(noteSection);
         noteSection.save();
         return noteSection;
@@ -91,7 +91,7 @@ public class NoteBook extends Observable {
      * @return
      * @throws IllegalArgumentException : if section name already exists
      */
-    public NoteSection addSectionToMap(String sectionName) throws IllegalArgumentException, IOException {
+    public NoteSection createNewEmptySection(String sectionName) throws IllegalArgumentException, IOException {
         synchronized (sectionsMap) {
             if (nameExist(sectionName)) throw new IllegalArgumentException("section name already exists");
             return _addSection(sectionName);
@@ -111,7 +111,7 @@ public class NoteBook extends Observable {
      * @return
      * @throws IllegalArgumentException
      */
-    public NoteSection addSectionToMap() throws IllegalArgumentException, IOException {
+    public NoteSection createNewEmptySection() throws IllegalArgumentException, IOException {
         String newSectionName ="NEW SECTION";
         int i = 0;
         synchronized (sectionsMap) {
@@ -140,11 +140,11 @@ public class NoteBook extends Observable {
         final NoteSection section = getSectionByUUID(uuid);
         section.changeName(name);
         setChanged();
-        notifyObservers(new SectionRenamed(uuid,name));
+        notifyObservers(new SectionRenamed(uuid, name));
     }
 
     public void changeNoteName(String sectionUUID, String noteUUID, String text) throws IllegalArgumentException,IOException {
-        getSectionByUUID(sectionUUID).changeNoteName(noteUUID,text);
+        getSectionByUUID(sectionUUID).changeNoteName(noteUUID, text);
     }
 
 
@@ -161,7 +161,7 @@ public class NoteBook extends Observable {
     }
     public void delNote(NoteRef noteRef) throws IOException {
         NoteSection section = getSectionByUUID(noteRef.getNoteSectionRef().getUUID());
-        section.delNote(noteRef);
+        section.delNote(noteRef.getUUID());
     }
     public void delete() throws IOException {
         synchronized (sectionsMap) {
@@ -174,6 +174,11 @@ public class NoteBook extends Observable {
         }
         //Files.delete(path);
         // TODO notify notebook deleted
+    }
+
+
+    public String getNoteContent(NoteRef noteRef) throws IOException {
+        return getSectionByUUID(noteRef.getNoteSectionRef().getUUID()).getNoteContent(noteRef.getUUID());
     }
 
     private Path path;

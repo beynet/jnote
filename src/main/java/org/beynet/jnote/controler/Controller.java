@@ -71,4 +71,8 @@ public class Controller {
     public static void delNoteBook(String noteBookUUID) throws IOException {
         Model.getInstance().delNoteBook(noteBookUUID);
     }
+
+    public static String getNoteContent(NoteRef noteRef) throws IOException {
+        return Model.getInstance().getNoteContent(noteRef);
+    }
 }

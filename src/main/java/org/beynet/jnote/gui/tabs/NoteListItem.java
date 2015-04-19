@@ -42,10 +42,6 @@ public class NoteListItem {
         return this.name.getValue();
     }
 
-    public void changeContent(String content) {
-        noteRef.setContent(content);
-    }
-
 
     SimpleObjectProperty<Boolean> inEdition ;
     SimpleObjectProperty<String>  name ;

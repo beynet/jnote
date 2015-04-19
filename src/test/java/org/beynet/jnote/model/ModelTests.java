@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
@@ -23,15 +24,17 @@ public class ModelTests extends DefaultTest{
         Path testFile = Files.createTempFile(tmpDir,"notesectiontest",".zip");
         if (Files.exists(testFile)) Files.delete(testFile);
 
-        NoteSection noteSection = NoteSection.fromZipFile(testFile);
+        NoteSection noteSection = NoteSection.fromAbsoluteZipFilePath(testFile);
         Note note = new Note();
-        noteSection.getNotes().add(note);
         note.setContent(htmlContent);
-        noteSection.save();
+        noteSection.addNote(note);
 
 
-        NoteSection noteSection2 = NoteSection.fromZipFile(testFile);
+        NoteSection noteSection2 = NoteSection.fromAbsoluteZipFilePath(testFile);
         assertThat(noteSection2,is(noteSection));
+
+        Note note2 = noteSection2.readNote(note.getUUID());
+        assertThat(note2,is(note));
     }
 
     /**
@@ -74,8 +77,8 @@ public class ModelTests extends DefaultTest{
         Path nb1 = root.resolve("nb1");
         Files.createDirectories(nb1);
         NoteBook nb = new NoteBook(nb1);
-        NoteSection section1 = nb.addSectionToMap(name);
-        NoteSection section2 = nb.addSectionToMap(name);
+        nb.createNewEmptySection(name);
+        nb.createNewEmptySection(name);
 
     }
 

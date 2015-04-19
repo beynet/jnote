@@ -7,12 +7,10 @@ public class NoteAdded implements SectionEvent {
 
     private final String UUID;
     private final String name;
-    private final String content;
 
-    public NoteAdded(String UUID,String name,String content) {
+    public NoteAdded(String UUID,String name) {
         this.UUID=UUID;
         this.name=name;
-        this.content=content;
     }
 
     public String getUUID() {
@@ -21,10 +19,6 @@ public class NoteAdded implements SectionEvent {
 
     public String getName() {
         return name;
-    }
-
-    public String getContent() {
-        return content;
     }
 
     @Override

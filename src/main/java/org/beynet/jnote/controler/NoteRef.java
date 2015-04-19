@@ -9,10 +9,9 @@ public class NoteRef {
     private String content;
     private final NoteSectionRef noteSectionRef;
 
-    public NoteRef(NoteSectionRef noteSectionRef,String UUID,String name,String content) {
+    public NoteRef(NoteSectionRef noteSectionRef,String UUID,String name) {
         this.UUID=UUID;
         this.name=name;
-        this.content=content;
         this.noteSectionRef=noteSectionRef;
     }
 
@@ -28,11 +27,4 @@ public class NoteRef {
         return name;
     }
 
-    public String getContent() {
-        return content;
-    }
-
-    public void setContent(String content) {
-        this.content = content;
-    }
 }
