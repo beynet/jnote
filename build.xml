@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="jnote" default="bundle-jpasswd" basedir=".">
+ <property environment="env" />
+    <taskdef name="bundleapp"
+             classname="com.oracle.appbundler.AppBundlerTask"   
+             classpath="lib/appbundler-1.0.jar"/>
+
+    <target name="bundle-jpasswd">
+        <bundleapp outputdirectory="target"
+            name="jnote"
+            displayname="jnote"
+            identifier="jnote"
+	    mainclassname="org.beynet.jnote.gui.Main">
+            <runtime dir="${env.JAVA_HOME}" />
+            <classpath file="target/jnote-1.0-SNAPSHOT-jar-with-dependencies.jar" />
+        </bundleapp>
+    </target>
+
+</project>
