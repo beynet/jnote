@@ -2,6 +2,7 @@ package org.beynet.jnote.model;
 
 import org.apache.log4j.Logger;
 import org.beynet.jnote.controler.NoteRef;
+import org.beynet.jnote.exceptions.AttachmentAlreadyExistException;
 import org.beynet.jnote.model.events.notebook.NoteSectionAdded;
 import org.beynet.jnote.model.events.notebook.NoteSectionDeleted;
 import org.beynet.jnote.model.events.notebook.SectionRenamed;
@@ -179,6 +180,11 @@ public class NoteBook extends Observable {
 
     public String getNoteContent(NoteRef noteRef) throws IOException {
         return getSectionByUUID(noteRef.getNoteSectionRef().getUUID()).getNoteContent(noteRef.getUUID());
+    }
+
+
+    public void addAttachment(NoteRef noteRef, Path path) throws IOException, AttachmentAlreadyExistException {
+        getSectionByUUID(noteRef.getNoteSectionRef().getUUID()).addNoteAttachment(noteRef.getUUID(),path);
     }
 
     private Path path;

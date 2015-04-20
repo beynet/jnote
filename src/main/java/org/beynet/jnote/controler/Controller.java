@@ -1,8 +1,10 @@
 package org.beynet.jnote.controler;
 
+import org.beynet.jnote.exceptions.AttachmentAlreadyExistException;
 import org.beynet.jnote.model.Model;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Observer;
 
 /**
@@ -74,5 +76,9 @@ public class Controller {
 
     public static String getNoteContent(NoteRef noteRef) throws IOException {
         return Model.getInstance().getNoteContent(noteRef);
+    }
+
+    public static void addAttachment(NoteRef noteRef, Path path) throws IOException, AttachmentAlreadyExistException {
+        Model.getInstance().addAttachment(noteRef, path);
     }
 }

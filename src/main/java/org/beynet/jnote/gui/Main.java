@@ -59,6 +59,7 @@ public class Main extends Application {
         currentStage.setOnCloseRequest(event -> {
             exitApplication();
         });
+
     }
 
     private void addMainPane(BorderPane pane) {

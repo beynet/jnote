@@ -3,10 +3,7 @@ package org.beynet.jnote.model;
 import org.apache.log4j.Logger;
 import org.beynet.jnote.exceptions.AttachmentAlreadyExistException;
 import org.beynet.jnote.exceptions.AttachmentNotFoundException;
-import org.beynet.jnote.model.events.section.NoteAdded;
-import org.beynet.jnote.model.events.section.NoteContentChanged;
-import org.beynet.jnote.model.events.section.NoteDeleted;
-import org.beynet.jnote.model.events.section.NoteRenamed;
+import org.beynet.jnote.model.events.section.*;
 import org.xml.sax.InputSource;
 
 import javax.xml.bind.JAXBContext;
@@ -234,6 +231,10 @@ public class NoteSection extends Observable {
         return note;
     }
 
+    public synchronized void addNoteAttachment(String noteUUID,Path file) throws IOException, AttachmentAlreadyExistException {
+        addNoteAttachment(noteUUID,file.getFileName().toString(),Files.readAllBytes(file),false);
+    }
+
     /**
      * add an attachment
      * @param noteUUID
@@ -256,6 +257,8 @@ public class NoteSection extends Observable {
                 os.write(fileContent);
             }
         }
+        setChanged();
+        notifyObservers(new FileAddedToNote(getUUID(),noteUUID,fileName));
     }
 
     public synchronized byte[] readNoteAttachment(String noteUUID,String fileName) throws AttachmentNotFoundException, IOException {

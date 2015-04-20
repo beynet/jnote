@@ -3,6 +3,7 @@ package org.beynet.jnote.model;
 import org.apache.log4j.Logger;
 import org.beynet.jnote.controler.NoteRef;
 import org.beynet.jnote.controler.NoteSectionRef;
+import org.beynet.jnote.exceptions.AttachmentAlreadyExistException;
 import org.beynet.jnote.model.events.model.NewNoteBookEvent;
 import org.beynet.jnote.model.events.model.OnExitEvent;
 
@@ -172,6 +173,10 @@ public class Model extends Observable implements FileVisitor<Path> {
 
     public String getNoteContent(NoteRef noteRef) throws IOException {
         return getNoteBookByUUID(noteRef.getNoteSectionRef().getNoteBookRef().getUUID()).getNoteContent(noteRef);
+    }
+
+    public void addAttachment(NoteRef noteRef, Path path) throws IOException, AttachmentAlreadyExistException {
+        getNoteBookByUUID(noteRef.getNoteSectionRef().getNoteBookRef().getUUID()).addAttachment(noteRef, path);
     }
 
     private Path rootDir ;

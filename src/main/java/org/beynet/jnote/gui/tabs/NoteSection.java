@@ -1,7 +1,11 @@
 package org.beynet.jnote.gui.tabs;
 
 import javafx.application.Platform;
-import javafx.scene.control.*;
+import javafx.scene.control.Label;
+import javafx.scene.control.Tab;
+import javafx.scene.control.TextField;
+import javafx.scene.input.Dragboard;
+import javafx.scene.input.TransferMode;
 import javafx.scene.layout.HBox;
 import javafx.scene.web.HTMLEditor;
 import javafx.stage.Stage;
@@ -10,11 +14,11 @@ import org.beynet.jnote.controler.Controller;
 import org.beynet.jnote.controler.NoteBookRef;
 import org.beynet.jnote.controler.NoteRef;
 import org.beynet.jnote.controler.NoteSectionRef;
-import org.beynet.jnote.model.events.model.NewNoteBookEvent;
-import org.beynet.jnote.model.events.model.OnExitEvent;
-import org.beynet.jnote.model.events.notebook.*;
+import org.beynet.jnote.exceptions.AttachmentAlreadyExistException;
+import org.beynet.jnote.gui.dialogs.Alert;
 import org.beynet.jnote.model.events.section.*;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Observable;
 import java.util.Observer;
@@ -66,10 +70,10 @@ public class NoteSection extends Tab implements Observer,SectionEventVisitor {
         // enable html content
         // -------------------
         noteList.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-            if (oldValue!=null) {
+            if (oldValue != null) {
                 save(oldValue.getNoteRef());
             }
-            if (newValue!=null) {
+            if (newValue != null) {
                 NoteRef noteRef = newValue.getNoteRef();
                 logger.debug("change current note");
                 content.setDisable(false);
@@ -77,17 +81,15 @@ public class NoteSection extends Tab implements Observer,SectionEventVisitor {
                 try {
                     contentStr = Controller.getNoteContent(noteRef);
                 } catch (IOException e) {
-                    logger.error("unable to read note content",e);
+                    logger.error("unable to read note content", e);
                     content.setDisable(true);
                 }
-                if (contentStr!=null) {
+                if (contentStr != null) {
                     content.setHtmlText(contentStr);
-                }
-                else {
+                } else {
                     content.setHtmlText("");
                 }
-            }
-            else {
+            } else {
                 content.setDisable(true);
             }
         });
@@ -100,14 +102,59 @@ public class NoteSection extends Tab implements Observer,SectionEventVisitor {
             if (isSelected() == false) {
                 Controller.unSubscribeToNoteSection(noteSectionRef, this);
                 save();
-                while (noteList.getList().size()>0) noteList.getList().remove(0);
+                while (noteList.getList().size() > 0) noteList.getList().remove(0);
             } else {
                 try {
                     Controller.subscribeToNoteSection(noteSectionRef, this);
-                }catch(IllegalArgumentException e) {
+                } catch (IllegalArgumentException e) {
                     // section is being removed
                 }
             }
+        });
+
+
+        content.setOnDragOver(event -> {
+            logger.debug("start drag over");
+            Dragboard db = event.getDragboard();
+            if (db.hasFiles()) {
+                logger.debug("accepting drag over");
+                event.acceptTransferModes(TransferMode.COPY);
+            } else {
+                logger.debug("consuming drag over");
+                event.consume();
+            }
+        });
+        content.setOnDragEntered(event -> {
+            if (event.getGestureSource() != content) {
+                content.getStyleClass().add("test");
+            }
+        });
+
+        content.setOnDragDropped(event -> {
+            Dragboard db = event.getDragboard();
+            boolean success = false;
+            logger.debug("on drag dropped");
+            NoteRef noteRef = noteList.getSelectionModel().getSelectedItem().getNoteRef();
+            if (db.hasFiles()) {
+                success = true;
+                String filePath = null;
+                for (File file:db.getFiles()) {
+                    final File newFile = file;
+                    Platform.runLater(()->{
+                        if (newFile!=null) {
+                            try {
+                                Controller.addAttachment(noteRef,newFile.toPath());
+                            } catch (IOException e) {
+                                new Alert(currentStage,"unable to attach file "+e.getMessage()).show();
+                            } catch (AttachmentAlreadyExistException e) {
+                                new Alert(currentStage,"a file with the same name is already attached to current note").show();
+                            }
+                        }
+                    });
+                }
+            }
+            event.setDropCompleted(success);
+            event.consume();
         });
 
     }
@@ -192,6 +239,12 @@ public class NoteSection extends Tab implements Observer,SectionEventVisitor {
                 break;
             }
         }
+    }
+
+
+    @Override
+    public void visit(FileAddedToNote fileAddedToNote) {
+        logger.debug("new file "+fileAddedToNote.getFileName()+" added to note "+fileAddedToNote.getNoteUUID());
     }
 
     private HTMLEditor content;
