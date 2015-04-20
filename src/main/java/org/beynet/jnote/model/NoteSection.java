@@ -1,6 +1,8 @@
 package org.beynet.jnote.model;
 
 import org.apache.log4j.Logger;
+import org.beynet.jnote.exceptions.AttachmentAlreadyExistException;
+import org.beynet.jnote.exceptions.AttachmentNotFoundException;
 import org.beynet.jnote.model.events.section.NoteAdded;
 import org.beynet.jnote.model.events.section.NoteContentChanged;
 import org.beynet.jnote.model.events.section.NoteDeleted;
@@ -201,7 +203,7 @@ public class NoteSection extends Observable {
 
     /**
      * read an return the expected note
-     * @param UUID
+     * @param UUID : the note UUID
      * @return : the note found (will nether be null)
      * @throws IOException
      * @throws IllegalArgumentException
@@ -211,16 +213,63 @@ public class NoteSection extends Observable {
         getNoteRefByUUID(UUID);
 
         try (FileSystem fileSystem = NoteSection.getZipFileSystem(this.getPath(),false)) {
-            Path path = fileSystem.getPath(UUID + ".xml");
-            InputSource source = new InputSource();
-            source.setEncoding("UTF-8");
-            source.setByteStream(Files.newInputStream(path));
-            Note note = (Note)jaxbContext.createUnmarshaller().unmarshal(source);
-            return note;
+            return _readNote(UUID,fileSystem);
+        }
+    }
+
+    private Note _readNote(String UUID,FileSystem fileSystem) throws IOException,IllegalArgumentException {
+        //check if the note exists
+        getNoteRefByUUID(UUID);
+
+        Path path = fileSystem.getPath(UUID + ".xml");
+        InputSource source = new InputSource();
+        source.setEncoding("UTF-8");
+        source.setByteStream(Files.newInputStream(path));
+        Note note = null;
+        try {
+            note = (Note)jaxbContext.createUnmarshaller().unmarshal(source);
         } catch (JAXBException e) {
             throw new IOException("unable to read note",e);
         }
+        return note;
     }
+
+    /**
+     * add an attachment
+     * @param noteUUID
+     * @param fileName
+     * @param fileContent
+     */
+    public synchronized void addNoteAttachment(String noteUUID,String fileName,byte[] fileContent,boolean override) throws IOException, AttachmentAlreadyExistException {
+        try (FileSystem fileSystem = NoteSection.getZipFileSystem(this.getPath(), true)) {
+            Path path = fileSystem.getPath(noteUUID + "_" + fileName);
+            if (Files.exists(path)) {
+                if (override==false) throw new AttachmentAlreadyExistException();
+                Files.delete(path);
+            }
+            Note note = _readNote(noteUUID, fileSystem);
+            Attachment attachment = new Attachment();
+            attachment.setName(fileName);
+            note.getAttachments().add(attachment);
+            _saveNote(note, fileSystem);
+            try (OutputStream os = Files.newOutputStream(path)) {
+                os.write(fileContent);
+            }
+        }
+    }
+
+    public synchronized byte[] readNoteAttachment(String noteUUID,String fileName) throws AttachmentNotFoundException, IOException {
+        try (FileSystem fileSystem = NoteSection.getZipFileSystem(this.getPath(), false)) {
+            getNoteRefByUUID(noteUUID);
+            Path path = fileSystem.getPath(noteUUID + "_" + fileName);
+            if (!Files.exists(path)) {
+                throw new AttachmentNotFoundException();
+            }
+            return Files.readAllBytes(path);
+        }
+    }
+
+
 
     /**
      * save the section
@@ -242,31 +291,40 @@ public class NoteSection extends Observable {
     }
 
     private void saveNote(Note note) throws IOException {
+
+        logger.debug("saving note UUID=" + note.getUUID());
         if (note==null) throw new IllegalArgumentException("note must not be null");
+
+        try (FileSystem fileSystem = NoteSection.getZipFileSystem(this.getPath(), true)) {
+            _saveNote(note,fileSystem);
+        }
+    }
+
+    private void _saveNote(Note note,FileSystem fileSystem) throws IOException {
+        if (note==null) throw new IllegalArgumentException("note must not be null");
+        if (fileSystem==null) throw new IllegalArgumentException("fileSystem must not be null");
+        final Marshaller marshaller=createMarshaller();
         NoteRef noteRef = getNoteRefByUUID(note.getUUID());
         noteRef.setName(note.getName());
         long modified = System.currentTimeMillis();
         note.setModified(modified);
         setModified(modified);
-        logger.debug("saving note UUID=" + note.getUUID());
-        final Marshaller marshaller=createMarshaller();
-        try (FileSystem fileSystem = NoteSection.getZipFileSystem(this.getPath(),true)) {
 
-            saveSection(fileSystem,marshaller);
+        saveSection(fileSystem, marshaller);
 
-            // saving the note
-            // ****************
-            Path notePath = fileSystem.getPath(note.getUUID()+".xml");
-            if (Files.exists(notePath)) Files.delete(notePath);
-            try (OutputStream os = Files.newOutputStream(notePath)) {
-                try {
-                    marshaller.marshal(note, os);
-                } catch (JAXBException e) {
-                    throw new IOException("unable to marshall note",e);
-                }
+        // saving the note
+        // ****************
+        Path notePath = fileSystem.getPath(note.getUUID()+".xml");
+        if (Files.exists(notePath)) Files.delete(notePath);
+        try (OutputStream os = Files.newOutputStream(notePath)) {
+            try {
+                marshaller.marshal(note, os);
+            } catch (JAXBException e) {
+                throw new IOException("unable to marshall note",e);
             }
         }
     }
+
 
     private void delNoteFromZip(NoteRef noteRef) throws IOException {
         long modified = System.currentTimeMillis();

@@ -1,12 +1,16 @@
 package org.beynet.jnote.model;
 
 import org.beynet.jnote.DefaultTest;
+import org.beynet.jnote.exceptions.AttachmentAlreadyExistException;
+import org.beynet.jnote.exceptions.AttachmentNotFoundException;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -35,6 +39,41 @@ public class ModelTests extends DefaultTest{
 
         Note note2 = noteSection2.readNote(note.getUUID());
         assertThat(note2,is(note));
+    }
+
+    @Test
+    public void attachmentAlreadyExist() throws IOException, AttachmentAlreadyExistException {
+        Path tmpDir = Paths.get(System.getProperty("java.io.tmpdir"));
+        Path testFile = Files.createTempFile(tmpDir,"notesectiontest",".zip");
+        if (Files.exists(testFile)) Files.delete(testFile);
+        String htmlContent = "<html></html>";
+        NoteSection noteSection = NoteSection.fromAbsoluteZipFilePath(testFile);
+        Note note = new Note();
+        note.setContent(htmlContent);
+        noteSection.addNote(note);
+
+        noteSection.addNoteAttachment(note.getUUID(), "truc.txt", Files.readAllBytes(Paths.get("/etc/passwd")), false);
+        noteSection.addNoteAttachment(note.getUUID(), "truc.txt", Files.readAllBytes(Paths.get("/etc/passwd")), false);
+    }
+
+    @Test
+    public void saveAndReadAttachment() throws IOException, AttachmentAlreadyExistException, AttachmentNotFoundException, NoSuchAlgorithmException {
+        Path tmpDir = Paths.get(System.getProperty("java.io.tmpdir"));
+        Path testFile = Files.createTempFile(tmpDir,"notesectiontest",".zip");
+        if (Files.exists(testFile)) Files.delete(testFile);
+        String htmlContent = "<html></html>";
+        NoteSection noteSection = NoteSection.fromAbsoluteZipFilePath(testFile);
+        Note note = new Note();
+        note.setName("note width attachment");
+        note.setContent(htmlContent);
+        noteSection.addNote(note);
+
+        String fileName = "truc.txt";
+        byte[] expected = Files.readAllBytes(Paths.get("/etc/passwd"));
+        noteSection.addNoteAttachment(note.getUUID(), fileName, expected, false);
+        byte[] bytes = noteSection.readNoteAttachment(note.getUUID(), fileName);
+
+        assertThat(expected,is(bytes));
     }
 
     /**
@@ -79,7 +118,6 @@ public class ModelTests extends DefaultTest{
         NoteBook nb = new NoteBook(nb1);
         nb.createNewEmptySection(name);
         nb.createNewEmptySection(name);
-
     }
 
 }

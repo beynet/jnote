@@ -1,9 +1,6 @@
 package org.beynet.jnote.model;
 
-import javax.xml.bind.annotation.XmlAttribute;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlType;
+import javax.xml.bind.annotation.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -57,6 +54,12 @@ public class Note {
         return name;
     }
 
+    @XmlElementWrapper(name="attachments")
+    @XmlElement(name="attachment")
+    public List<Attachment> getAttachments() {
+        return attachments;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -91,4 +94,5 @@ public class Note {
     private String name;
     private long   created  ;
     private String UUID     ;
+    private List<Attachment> attachments = new ArrayList<>();
 }
