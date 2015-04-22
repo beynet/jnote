@@ -1,21 +1,28 @@
 package org.beynet.jnote.model;
 
+import org.apache.log4j.Logger;
+import org.beynet.jnote.model.events.note.AttachmentAddedToNote;
+
 import javax.xml.bind.annotation.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Observable;
+import java.util.Observer;
 
 /**
  * Created by beynet on 07/04/15.
  */
 @XmlRootElement(name="Note")
 @XmlType(name="NoteType")
-public class Note {
+public class Note  {
 
     public Note() {
         this.UUID = java.util.UUID.randomUUID().toString();
         this.modified=this.created=System.currentTimeMillis();
         this.name = "";
     }
+
+
 
     @XmlElement(name="UUID")
     public String getUUID() {
@@ -53,6 +60,9 @@ public class Note {
     public String getName() {
         return name;
     }
+    public void setName(String name) {
+        this.name = name;
+    }
 
     @XmlElementWrapper(name="attachments")
     @XmlElement(name="attachment")
@@ -85,9 +95,8 @@ public class Note {
         return result;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
+
+
 
     private String content;
     private long   modified ;
@@ -95,4 +104,6 @@ public class Note {
     private long   created  ;
     private String UUID     ;
     private List<Attachment> attachments = new ArrayList<>();
+
+
 }

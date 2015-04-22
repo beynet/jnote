@@ -1,8 +1,10 @@
 package org.beynet.jnote.model;
 
 import org.apache.log4j.Logger;
+import org.beynet.jnote.controler.AttachmentRef;
 import org.beynet.jnote.controler.NoteRef;
 import org.beynet.jnote.exceptions.AttachmentAlreadyExistException;
+import org.beynet.jnote.exceptions.AttachmentNotFoundException;
 import org.beynet.jnote.model.events.notebook.NoteSectionAdded;
 import org.beynet.jnote.model.events.notebook.NoteSectionDeleted;
 import org.beynet.jnote.model.events.notebook.SectionRenamed;
@@ -185,6 +187,18 @@ public class NoteBook extends Observable {
 
     public void addAttachment(NoteRef noteRef, Path path) throws IOException, AttachmentAlreadyExistException {
         getSectionByUUID(noteRef.getNoteSectionRef().getUUID()).addNoteAttachment(noteRef.getUUID(),path);
+    }
+
+    public void subscribeToNote(NoteRef noteRef, Observer observer) {
+        getSectionByUUID(noteRef.getNoteSectionRef().getUUID()).subscribeToNote(noteRef.getUUID(), observer);
+    }
+
+
+    public void unSubscribeToNote(NoteRef noteRef, Observer observer) {
+        getSectionByUUID(noteRef.getNoteSectionRef().getUUID()).unSubscribeToNote(noteRef.getUUID(), observer);
+    }
+    public void deleteAttachment(AttachmentRef attachmentRef) throws IOException, AttachmentNotFoundException {
+        getSectionByUUID(attachmentRef.getNoteRef().getNoteSectionRef().getUUID()).deleteAttachment(attachmentRef);
     }
 
     private Path path;

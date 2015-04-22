@@ -8,5 +8,4 @@ public interface SectionEventVisitor {
     void visit(NoteAdded noteAdded);
     void visit(NoteRenamed noteRenamed);
     void visit(NoteContentChanged noteContentChanged);
-    void visit(FileAddedToNote fileAddedToNote);
 }

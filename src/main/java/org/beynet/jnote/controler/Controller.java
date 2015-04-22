@@ -1,6 +1,7 @@
 package org.beynet.jnote.controler;
 
 import org.beynet.jnote.exceptions.AttachmentAlreadyExistException;
+import org.beynet.jnote.exceptions.AttachmentNotFoundException;
 import org.beynet.jnote.model.Model;
 
 import java.io.IOException;
@@ -36,6 +37,14 @@ public class Controller {
     public static void unSubscribeToNoteSection(NoteSectionRef noteSectionRef,Observer observer) {
         Model.getInstance().unSubscribeToNoteSection(noteSectionRef.getNoteBookRef().getUUID(), noteSectionRef.getUUID(), observer);
     }
+
+    public static void subscribeToNote(NoteRef noteRef, Observer observer) {
+        Model.getInstance().subscribeToNote(noteRef, observer);
+    }
+    public static void unSubscribeToNote(NoteRef noteRef, Observer observer) {
+        Model.getInstance().unSubscribeToNote(noteRef, observer);
+    }
+
 
     public static void createNewSection(NoteBookRef noteBook) throws IOException {
         Model.getInstance().createNewSection(noteBook.getUUID());
@@ -80,5 +89,9 @@ public class Controller {
 
     public static void addAttachment(NoteRef noteRef, Path path) throws IOException, AttachmentAlreadyExistException {
         Model.getInstance().addAttachment(noteRef, path);
+    }
+
+    public static void deleteAttachment(AttachmentRef attachmentRef) throws IOException, AttachmentNotFoundException {
+        Model.getInstance().deleteAttachment(attachmentRef);
     }
 }

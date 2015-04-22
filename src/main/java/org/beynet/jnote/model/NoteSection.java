@@ -1,6 +1,7 @@
 package org.beynet.jnote.model;
 
 import org.apache.log4j.Logger;
+import org.beynet.jnote.controler.AttachmentRef;
 import org.beynet.jnote.exceptions.AttachmentAlreadyExistException;
 import org.beynet.jnote.exceptions.AttachmentNotFoundException;
 import org.beynet.jnote.model.events.section.*;
@@ -242,7 +243,9 @@ public class NoteSection extends Observable {
      * @param fileContent
      */
     public synchronized void addNoteAttachment(String noteUUID,String fileName,byte[] fileContent,boolean override) throws IOException, AttachmentAlreadyExistException {
+        int length = fileContent.length;
         try (FileSystem fileSystem = NoteSection.getZipFileSystem(this.getPath(), true)) {
+            NoteRef noteRefByUUID = getNoteRefByUUID(noteUUID);
             Path path = fileSystem.getPath(noteUUID + "_" + fileName);
             if (Files.exists(path)) {
                 if (override==false) throw new AttachmentAlreadyExistException();
@@ -251,14 +254,14 @@ public class NoteSection extends Observable {
             Note note = _readNote(noteUUID, fileSystem);
             Attachment attachment = new Attachment();
             attachment.setName(fileName);
+            attachment.setSize(length);
             note.getAttachments().add(attachment);
+            noteRefByUUID.addAttachment(attachment);
             _saveNote(note, fileSystem);
             try (OutputStream os = Files.newOutputStream(path)) {
                 os.write(fileContent);
             }
         }
-        setChanged();
-        notifyObservers(new FileAddedToNote(getUUID(),noteUUID,fileName));
     }
 
     public synchronized byte[] readNoteAttachment(String noteUUID,String fileName) throws AttachmentNotFoundException, IOException {
@@ -455,5 +458,45 @@ public class NoteSection extends Observable {
     public String getNoteContent(String UUID) throws IOException {
         Note note = readNote(UUID);
         return note.getContent();
+    }
+
+    public void subscribeToNote(String noteUUID, Observer observer) {
+        NoteRef noteRefByUUID = getNoteRefByUUID(noteUUID);
+        try {
+            Note note = readNote(noteUUID);
+            noteRefByUUID.addObserver(observer,note.getAttachments());
+        } catch (IOException e) {
+            logger.error("unable to read note",e);
+        }
+    }
+
+    public void unSubscribeToNote(String noteUUID, Observer observer) {
+        NoteRef noteRefByUUID = getNoteRefByUUID(noteUUID);
+        noteRefByUUID.deleteObserver(observer);
+    }
+
+    public synchronized void deleteAttachment(AttachmentRef attachmentRef) throws IOException, AttachmentNotFoundException {
+        logger.debug("delete attachment name="+attachmentRef.getFileName()+" from note :"+attachmentRef.getNoteRef().getUUID());
+        try (FileSystem fileSystem = NoteSection.getZipFileSystem(this.getPath(), true)) {
+            String noteUUID = attachmentRef.getNoteRef().getUUID();
+            NoteRef noteRefByUUID = getNoteRefByUUID(noteUUID);
+
+            Path path = fileSystem.getPath(noteUUID + "_" + attachmentRef.getFileName());
+            if (!Files.exists(path)) {
+                throw new AttachmentNotFoundException();
+            }
+            Note note = _readNote(noteUUID, fileSystem);
+            Attachment removed = null;
+            for (Attachment attachment:note.getAttachments()) {
+                if (attachment.getName().equals(attachmentRef.getFileName())) {
+                    note.getAttachments().remove(attachment);
+                    removed = attachment;
+                    break;
+                }
+            }
+            _saveNote(note, fileSystem);
+            Files.delete(path);
+            noteRefByUUID.removeAttachment(removed);
+        }
     }
 }

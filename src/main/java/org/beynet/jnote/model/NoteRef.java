@@ -1,17 +1,40 @@
 package org.beynet.jnote.model;
 
+import org.apache.log4j.Logger;
+import org.beynet.jnote.model.events.note.AttachmentAddedToNote;
+import org.beynet.jnote.model.events.note.AttachmentRemovedFromNote;
+
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlType;
+import java.util.List;
+import java.util.Observable;
+import java.util.Observer;
 
 /**
  * Created by beynet on 19/04/2015.
  */
 @XmlType(name = "NoteRefType")
-public class NoteRef {
+public class NoteRef  extends Observable {
+    public NoteRef() {
 
+    }
     public NoteRef(String UUID,String name) {
         this.UUID = UUID ;
         this.name = name ;
+    }
+
+    public synchronized void addObserver(Observer o,List<Attachment> attachments) {
+        logger.debug("add observer to note UUID=" + getUUID());
+        super.addObserver(o);
+        for (Attachment attachment : attachments) {
+            o.update(this,new AttachmentAddedToNote(getUUID(),attachment.getName(),attachment.getSize()));
+        }
+    }
+
+    @Override
+    public synchronized void deleteObserver(Observer o) {
+        super.deleteObserver(o);
+        logger.debug("delete observer from note UUID=" + getUUID());
     }
 
     @Override
@@ -33,10 +56,15 @@ public class NoteRef {
         return result;
     }
 
-    public NoteRef() {
-
+    public void addAttachment(Attachment attachment) {
+        setChanged();
+        notifyObservers(new AttachmentAddedToNote(getUUID(),attachment.getName(),attachment.getSize()));
     }
 
+    public void removeAttachment(Attachment attachment) {
+        setChanged();
+        notifyObservers(new AttachmentRemovedFromNote(getUUID(),attachment.getName()));
+    }
     @XmlAttribute(name="name")
     public String getName() {
         return name;
@@ -53,6 +81,9 @@ public class NoteRef {
         this.UUID = UUID;
     }
 
-    String name ;
-    String UUID ;
+    private String name ;
+    private String UUID ;
+
+    private final static Logger logger = Logger.getLogger(Note.class);
+
 }

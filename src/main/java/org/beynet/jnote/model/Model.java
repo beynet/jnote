@@ -1,9 +1,11 @@
 package org.beynet.jnote.model;
 
 import org.apache.log4j.Logger;
+import org.beynet.jnote.controler.AttachmentRef;
 import org.beynet.jnote.controler.NoteRef;
 import org.beynet.jnote.controler.NoteSectionRef;
 import org.beynet.jnote.exceptions.AttachmentAlreadyExistException;
+import org.beynet.jnote.exceptions.AttachmentNotFoundException;
 import org.beynet.jnote.model.events.model.NewNoteBookEvent;
 import org.beynet.jnote.model.events.model.OnExitEvent;
 
@@ -177,6 +179,21 @@ public class Model extends Observable implements FileVisitor<Path> {
 
     public void addAttachment(NoteRef noteRef, Path path) throws IOException, AttachmentAlreadyExistException {
         getNoteBookByUUID(noteRef.getNoteSectionRef().getNoteBookRef().getUUID()).addAttachment(noteRef, path);
+    }
+
+
+    public void subscribeToNote(NoteRef noteRef, Observer observer) {
+        getNoteBookByUUID(noteRef.getNoteSectionRef().getNoteBookRef().getUUID()).subscribeToNote(noteRef, observer);
+    }
+
+
+    public void unSubscribeToNote(NoteRef noteRef, Observer observer) {
+        getNoteBookByUUID(noteRef.getNoteSectionRef().getNoteBookRef().getUUID()).unSubscribeToNote(noteRef, observer);
+    }
+
+
+    public void deleteAttachment(AttachmentRef attachmentRef) throws IOException, AttachmentNotFoundException {
+        getNoteBookByUUID(attachmentRef.getNoteRef().getNoteSectionRef().getNoteBookRef().getUUID()).deleteAttachment(attachmentRef);
     }
 
     private Path rootDir ;

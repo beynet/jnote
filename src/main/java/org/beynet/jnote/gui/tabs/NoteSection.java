@@ -7,7 +7,6 @@ import javafx.scene.control.TextField;
 import javafx.scene.input.Dragboard;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.HBox;
-import javafx.scene.web.HTMLEditor;
 import javafx.stage.Stage;
 import org.apache.log4j.Logger;
 import org.beynet.jnote.controler.Controller;
@@ -55,7 +54,7 @@ public class NoteSection extends Tab implements Observer,SectionEventVisitor {
 
 
         noteList = new NoteList(this.currentStage,noteSectionRef);
-        content = new HTMLEditor();
+        content = new JNoteEditor(currentStage);
         content.setDisable(true);
         hbox.getChildren().add(content);
         hbox.getChildren().add(noteList);
@@ -72,6 +71,7 @@ public class NoteSection extends Tab implements Observer,SectionEventVisitor {
         noteList.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             if (oldValue != null) {
                 save(oldValue.getNoteRef());
+                content.onNoteUnSelected(oldValue.getNoteRef());
             }
             if (newValue != null) {
                 NoteRef noteRef = newValue.getNoteRef();
@@ -89,6 +89,7 @@ public class NoteSection extends Tab implements Observer,SectionEventVisitor {
                 } else {
                     content.setHtmlText("");
                 }
+                content.onNoteSelected(newValue.getNoteRef());
             } else {
                 content.setDisable(true);
             }
@@ -241,13 +242,7 @@ public class NoteSection extends Tab implements Observer,SectionEventVisitor {
         }
     }
 
-
-    @Override
-    public void visit(FileAddedToNote fileAddedToNote) {
-        logger.debug("new file "+fileAddedToNote.getFileName()+" added to note "+fileAddedToNote.getNoteUUID());
-    }
-
-    private HTMLEditor content;
+    private JNoteEditor content;
     private NoteSectionRef noteSectionRef;
     private Label labeltitle ;
     private TextField fieldTitle ;

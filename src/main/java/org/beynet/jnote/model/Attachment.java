@@ -22,6 +22,14 @@ public class Attachment {
         this.name = name;
     }
 
+    @XmlAttribute(name="size")
+    public long getSize() {
+        return size;
+    }
+    public void setSize(long size) {
+        this.size = size;
+    }
+
     @XmlAttribute(name="mimeType")
     public String getMimeType() {
         return mimeType;
@@ -32,5 +40,6 @@ public class Attachment {
 
     private String name ;
     private String mimeType ;
+    private long   size ;
 
 }

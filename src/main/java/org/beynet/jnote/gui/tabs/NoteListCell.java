@@ -1,9 +1,12 @@
 package org.beynet.jnote.gui.tabs;
 
+import javafx.application.Platform;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.TextField;
+import org.apache.log4j.Logger;
 import org.beynet.jnote.controler.Controller;
 import org.beynet.jnote.controler.NoteRef;
+import org.beynet.jnote.gui.dialogs.Alert;
 
 import java.io.IOException;
 
@@ -30,7 +33,10 @@ public class NoteListCell extends ListCell<NoteListItem> {
                     try {
                         Controller.changeNoteName(noteRef.getNoteSectionRef(), noteRef.getUUID(), textField.getText());
                     } catch (IOException e) {
-                        //TODO : show an alert
+                        logger.error("unable to change note name",e);
+//                        Platform.runLater(()-> {
+//                            new Alert("unable to change note name " + e.getMessage()).show();
+//                        });
                     }
                 });
             } else {
@@ -38,4 +44,6 @@ public class NoteListCell extends ListCell<NoteListItem> {
             }
         }
     }
+
+    private final static Logger logger = Logger.getLogger(NoteListCell.class);
 }
