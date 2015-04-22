@@ -1,12 +1,17 @@
 package org.beynet.jnote.gui.dialogs;
 
+import javafx.application.Platform;
+import javafx.concurrent.Task;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextArea;
 import javafx.scene.layout.GridPane;
+import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
 import org.apache.log4j.Logger;
 import org.beynet.jnote.controler.Controller;
 import org.beynet.jnote.controler.AttachmentRef;
+
+import java.io.File;
 
 /**
  * Created by beynet on 22/04/2015.
@@ -31,16 +36,36 @@ public class FileManagement extends DialogModal {
 
         Button download = new Button("download");
         download.setOnAction(event -> {
-            this.hide();
+            DirectoryChooser directoryChooser = new DirectoryChooser();
+            File result = directoryChooser.showDialog(this);
+            Task<Void> t = new Task<Void>() {
+                @Override
+                protected Void call() throws Exception {
+                    try {
+                        Controller.saveAttachment(attachmentRef,result.toPath());
+                        Platform.runLater(() -> new Alert(parent, "file correctly downloaded").show());
+                    } catch(Exception e) {
+                        Platform.runLater(() -> new Alert(parent, "unable to download attachment " + e.getMessage()).show());
+                    }
+                    return null;
+                }
+            };
+            new Thread(t).start();
+            close();
         });
 
         Button delete = new Button("delete");
         delete.setOnAction(event -> {
-            try {
-                Controller.deleteAttachment(attachmentRef);
-            } catch (Exception e) {
-                logger.error("unable to remove attachment", e);
+            Confirm confirm = new Confirm(this, "do you really want to delete attached file ?");
+            confirm.showAndWait();
+            if (confirm.isConfirmed()) {
+                try {
+                    Controller.deleteAttachment(attachmentRef);
+                } catch (Exception e) {
+                    logger.error("unable to remove attachment", e);
+                }
             }
+            close();
         });
 
         //binding width

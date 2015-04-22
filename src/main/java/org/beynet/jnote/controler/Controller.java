@@ -94,4 +94,8 @@ public class Controller {
     public static void deleteAttachment(AttachmentRef attachmentRef) throws IOException, AttachmentNotFoundException {
         Model.getInstance().deleteAttachment(attachmentRef);
     }
+
+    public static void saveAttachment(AttachmentRef attachmentRef, Path path) throws IOException, AttachmentNotFoundException {
+        Model.getInstance().saveAttachment(attachmentRef,path);
+    }
 }

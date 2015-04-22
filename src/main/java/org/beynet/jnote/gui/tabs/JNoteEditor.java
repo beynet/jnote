@@ -36,7 +36,7 @@ public class JNoteEditor extends HTMLEditor implements Observer,NoteEventVisitor
             attachmentCombo.setOnAction(event -> {
                 final AttachmentRef selected = attachmentCombo.getSelectionModel().getSelectedItem();
                 if (selected!=null) {
-                    Platform.runLater(() -> {
+                    Platform.runLater(()-> {
                         attachmentCombo.getSelectionModel().select(null);
                         new FileManagement(currentStage, selected).show();
                     });
@@ -48,7 +48,7 @@ public class JNoteEditor extends HTMLEditor implements Observer,NoteEventVisitor
     @Override
     public void update(Observable o, Object arg) {
         if (arg!=null && arg instanceof NoteEvent) {
-            ((NoteEvent) arg).accept(this);
+            Platform.runLater(() -> ((NoteEvent) arg).accept(this));
         }
     }
 
@@ -60,14 +60,12 @@ public class JNoteEditor extends HTMLEditor implements Observer,NoteEventVisitor
 
     @Override
     public void visit(AttachmentRemovedFromNote attachmentRemovedFromNote) {
-        Platform.runLater(()->{
-            for (AttachmentRef ref:attachments) {
-                if (ref.getFileName().equals(attachmentRemovedFromNote.getFileName())) {
-                    attachments.remove(ref);
-                    break;
-                }
+        for (AttachmentRef ref:attachments) {
+            if (ref.getFileName().equals(attachmentRemovedFromNote.getFileName())) {
+                attachments.remove(ref);
+                break;
             }
-        });
+        }
     }
 
     /**

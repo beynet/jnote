@@ -1,6 +1,7 @@
 package org.beynet.jnote.gui.tabs;
 
 import javafx.application.Platform;
+import javafx.concurrent.Task;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TextField;
@@ -141,17 +142,22 @@ public class NoteSection extends Tab implements Observer,SectionEventVisitor {
                 String filePath = null;
                 for (File file:db.getFiles()) {
                     final File newFile = file;
-                    Platform.runLater(()->{
-                        if (newFile!=null) {
-                            try {
-                                Controller.addAttachment(noteRef,newFile.toPath());
-                            } catch (IOException e) {
-                                new Alert(currentStage,"unable to attach file "+e.getMessage()).show();
-                            } catch (AttachmentAlreadyExistException e) {
-                                new Alert(currentStage,"a file with the same name is already attached to current note").show();
+                    Task<Void> t = new Task<Void>() {
+                        @Override
+                        protected Void call() throws Exception {
+                            if (newFile!=null) {
+                                try {
+                                    Controller.addAttachment(noteRef,newFile.toPath());
+                                } catch (IOException e) {
+                                    new Alert(currentStage,"unable to attach file "+e.getMessage()).show();
+                                } catch (AttachmentAlreadyExistException e) {
+                                    new Alert(currentStage,"a file with the same name is already attached to current note").show();
+                                }
                             }
+                            return null;
                         }
-                    });
+                    };
+                    new Thread(t).start();
                 }
             }
             event.setDropCompleted(success);
@@ -202,18 +208,16 @@ public class NoteSection extends Tab implements Observer,SectionEventVisitor {
     @Override
     public void update(Observable o, Object arg) {
         if (arg!=null && arg instanceof SectionEvent) {
-            ((SectionEvent)arg).accept(this);
+            Platform.runLater(()->((SectionEvent) arg).accept(this));
         }
     }
 
     @Override
     public void visit(NoteAdded noteAdded) {
-        Platform.runLater(() -> {
-            if (isSelected() == true) {
-                logger.debug("add new note name=" + noteAdded.getName() + " UUID=" + noteAdded.getUUID() + " to section " + noteSectionRef.getSectionName());
-                noteList.getList().add(new NoteListItem(new NoteRef(noteSectionRef, noteAdded.getUUID(), noteAdded.getName()), false));
-            }
-        });
+        if (isSelected() == true) {
+            logger.debug("add new note name=" + noteAdded.getName() + " UUID=" + noteAdded.getUUID() + " to section " + noteSectionRef.getSectionName());
+            noteList.getList().add(new NoteListItem(new NoteRef(noteSectionRef, noteAdded.getUUID(), noteAdded.getName()), false));
+        }
     }
 
     @Override
@@ -234,9 +238,7 @@ public class NoteSection extends Tab implements Observer,SectionEventVisitor {
     public void visit(NoteDeleted noteDeleted) {
         for (NoteListItem n:noteList.getList()) {
             if (n.getNoteRef().getUUID().equals(noteDeleted.getUUID())) {
-                Platform.runLater(() -> {
-                    noteList.getList().remove(n);
-                });
+                noteList.getList().remove(n);
                 break;
             }
         }

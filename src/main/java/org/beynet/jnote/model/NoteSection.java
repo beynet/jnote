@@ -1,5 +1,6 @@
 package org.beynet.jnote.model;
 
+import javafx.application.Platform;
 import org.apache.log4j.Logger;
 import org.beynet.jnote.controler.AttachmentRef;
 import org.beynet.jnote.exceptions.AttachmentAlreadyExistException;
@@ -15,15 +16,15 @@ import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.*;
 import java.util.*;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * A note section is a list of notebook
@@ -233,7 +234,14 @@ public class NoteSection extends Observable {
     }
 
     public synchronized void addNoteAttachment(String noteUUID,Path file) throws IOException, AttachmentAlreadyExistException {
-        addNoteAttachment(noteUUID,file.getFileName().toString(),Files.readAllBytes(file),false);
+        _addNoteAttachment(noteUUID,file.getFileName().toString(),Files.size(file),false,(destination)->{
+            try {
+                Files.copy(file,destination);
+                return null;
+            } catch (IOException e) {
+                return e;
+            }
+        });
     }
 
     /**
@@ -244,6 +252,17 @@ public class NoteSection extends Observable {
      */
     public synchronized void addNoteAttachment(String noteUUID,String fileName,byte[] fileContent,boolean override) throws IOException, AttachmentAlreadyExistException {
         int length = fileContent.length;
+        _addNoteAttachment(noteUUID,fileName,length,override,(destination)->{
+            try (InputStream is = new ByteArrayInputStream(fileContent)){
+                Files.copy(is,destination);
+                return null;
+            } catch (IOException e) {
+                return e;
+            }
+        });
+    }
+
+    private void _addNoteAttachment(String noteUUID,String fileName,long length,boolean override,Function<Path,IOException> doTheCopy) throws IOException, AttachmentAlreadyExistException {
         try (FileSystem fileSystem = NoteSection.getZipFileSystem(this.getPath(), true)) {
             NoteRef noteRefByUUID = getNoteRefByUUID(noteUUID);
             Path path = fileSystem.getPath(noteUUID + "_" + fileName);
@@ -256,11 +275,10 @@ public class NoteSection extends Observable {
             attachment.setName(fileName);
             attachment.setSize(length);
             note.getAttachments().add(attachment);
-            noteRefByUUID.addAttachment(attachment);
             _saveNote(note, fileSystem);
-            try (OutputStream os = Files.newOutputStream(path)) {
-                os.write(fileContent);
-            }
+            IOException result = doTheCopy.apply(path);
+            if (result!=null) throw result;
+            noteRefByUUID.addAttachment(attachment);
         }
     }
 
@@ -476,7 +494,7 @@ public class NoteSection extends Observable {
     }
 
     public synchronized void deleteAttachment(AttachmentRef attachmentRef) throws IOException, AttachmentNotFoundException {
-        logger.debug("delete attachment name="+attachmentRef.getFileName()+" from note :"+attachmentRef.getNoteRef().getUUID());
+        logger.debug("delete attachment name=" + attachmentRef.getFileName() + " from note :" + attachmentRef.getNoteRef().getUUID());
         try (FileSystem fileSystem = NoteSection.getZipFileSystem(this.getPath(), true)) {
             String noteUUID = attachmentRef.getNoteRef().getUUID();
             NoteRef noteRefByUUID = getNoteRefByUUID(noteUUID);
@@ -497,6 +515,20 @@ public class NoteSection extends Observable {
             _saveNote(note, fileSystem);
             Files.delete(path);
             noteRefByUUID.removeAttachment(removed);
+        }
+    }
+
+    public synchronized void saveAttachment(AttachmentRef attachmentRef, Path destination) throws IOException, AttachmentNotFoundException {
+        logger.debug("save attachment name=" + attachmentRef.getFileName() + " from note :" + attachmentRef.getNoteRef().getUUID());
+        try (FileSystem fileSystem = NoteSection.getZipFileSystem(this.getPath(), false)) {
+            String noteUUID = attachmentRef.getNoteRef().getUUID();
+            NoteRef noteRefByUUID = getNoteRefByUUID(noteUUID);
+
+            Path path = fileSystem.getPath(noteUUID + "_" + attachmentRef.getFileName());
+            if (!Files.exists(path)) {
+                throw new AttachmentNotFoundException();
+            }
+            Files.copy(path,destination.resolve(attachmentRef.getFileName()), StandardCopyOption.REPLACE_EXISTING);
         }
     }
 }

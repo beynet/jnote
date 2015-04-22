@@ -195,6 +195,9 @@ public class Model extends Observable implements FileVisitor<Path> {
     public void deleteAttachment(AttachmentRef attachmentRef) throws IOException, AttachmentNotFoundException {
         getNoteBookByUUID(attachmentRef.getNoteRef().getNoteSectionRef().getNoteBookRef().getUUID()).deleteAttachment(attachmentRef);
     }
+    public void saveAttachment(AttachmentRef attachmentRef, Path path) throws IOException, AttachmentNotFoundException {
+        getNoteBookByUUID(attachmentRef.getNoteRef().getNoteSectionRef().getNoteBookRef().getUUID()).saveAttachment(attachmentRef,path);
+    }
 
     private Path rootDir ;
     private long depth ;

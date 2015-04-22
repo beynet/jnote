@@ -200,6 +200,9 @@ public class NoteBook extends Observable {
     public void deleteAttachment(AttachmentRef attachmentRef) throws IOException, AttachmentNotFoundException {
         getSectionByUUID(attachmentRef.getNoteRef().getNoteSectionRef().getUUID()).deleteAttachment(attachmentRef);
     }
+    public void saveAttachment(AttachmentRef attachmentRef, Path path) throws IOException, AttachmentNotFoundException {
+        getSectionByUUID(attachmentRef.getNoteRef().getNoteSectionRef().getUUID()).saveAttachment(attachmentRef,path);
+    }
 
     private Path path;
     protected Map<String,NoteSection> sectionsMap = new HashMap<>();

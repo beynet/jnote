@@ -67,7 +67,7 @@ public class NoteBook extends TabPane implements Observer ,NoteBookEventVisitor 
     @Override
     public void update(Observable o, Object arg) {
         if (arg instanceof NoteBookEvent) {
-            if (arg!=null) ((NoteBookEvent)arg).accept(this);
+            Platform.runLater(()->{if (arg!=null) ((NoteBookEvent)arg).accept(this);});
         }
     }
 
@@ -84,36 +84,32 @@ public class NoteBook extends TabPane implements Observer ,NoteBookEventVisitor 
 
     @Override
     public void visit(NoteSectionDeleted noteSectionDeleted) {
-//        Platform.runLater(()->{
-            for (Tab tab:getTabs()) {
-                if (tab instanceof NoteSection) {
-                    NoteSection noteSection = (NoteSection) tab;
-                    if (noteSection.match(noteSectionDeleted.getUUID())) {
-                        noteSection.delete();
-                        getTabs().remove(tab);
-                        if (getTabs().size()==1) addNoteTab.skipNextSelectionChange();
-                        break;
-                    }
+        for (Tab tab:getTabs()) {
+            if (tab instanceof NoteSection) {
+                NoteSection noteSection = (NoteSection) tab;
+                if (noteSection.match(noteSectionDeleted.getUUID())) {
+                    noteSection.delete();
+                    getTabs().remove(tab);
+                    if (getTabs().size()==1) addNoteTab.skipNextSelectionChange();
+                    break;
                 }
             }
-//        });
+        }
     }
 
     @Override
     public void visit(NoteSectionAdded event) {
         NoteSection section = new NoteSection(currentStage,currentNoteBook,event.getName(),event.getUUID());
-        Platform.runLater(() -> addSection(section));
+        addSection(section);
     }
 
     @Override
     public void visit(SectionRenamed sectionRenamed) {
-        Platform.runLater(()->{
-            for (NoteSection section:mySections) {
-                if (section.getUUID().equals(sectionRenamed.getUUID())) {
-                    section.changeName(sectionRenamed.getName());
-                }
+        for (NoteSection section:mySections) {
+            if (section.getUUID().equals(sectionRenamed.getUUID())) {
+                section.changeName(sectionRenamed.getName());
             }
-        });
+        }
     }
 
 

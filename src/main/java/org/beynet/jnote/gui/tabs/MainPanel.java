@@ -66,15 +66,13 @@ public class MainPanel extends VBox implements Observer,ModelEventVisitor {
 
     @Override
     public void update(Observable o, Object arg) {
-        ((ModelEvent)arg).accept(this);
+        Platform.runLater(()->((ModelEvent) arg).accept(this));
     }
 
 
     @Override
     public void visit(NewNoteBookEvent newNoteBookEvent) {
-        Platform.runLater(()->{
-            noteBooksList.add(new NoteBookRef(newNoteBookEvent.getUUID(),newNoteBookEvent.getName()));
-        });
+        noteBooksList.add(new NoteBookRef(newNoteBookEvent.getUUID(),newNoteBookEvent.getName()));
     }
 
     @Override
