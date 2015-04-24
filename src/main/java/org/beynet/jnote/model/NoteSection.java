@@ -1,11 +1,13 @@
 package org.beynet.jnote.model;
 
-import javafx.application.Platform;
 import org.apache.log4j.Logger;
 import org.beynet.jnote.controler.AttachmentRef;
 import org.beynet.jnote.exceptions.AttachmentAlreadyExistException;
 import org.beynet.jnote.exceptions.AttachmentNotFoundException;
-import org.beynet.jnote.model.events.section.*;
+import org.beynet.jnote.model.events.section.NoteAdded;
+import org.beynet.jnote.model.events.section.NoteContentChanged;
+import org.beynet.jnote.model.events.section.NoteDeleted;
+import org.beynet.jnote.model.events.section.NoteRenamed;
 import org.xml.sax.InputSource;
 
 import javax.xml.bind.JAXBContext;
@@ -24,7 +26,6 @@ import java.net.URI;
 import java.nio.file.*;
 import java.util.*;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 /**
  * A note section is a list of notebook
@@ -207,7 +208,7 @@ public class NoteSection extends Observable {
      * @throws IOException
      * @throws IllegalArgumentException
      */
-    public synchronized Note readNote(String UUID) throws IOException,IllegalArgumentException {
+    protected Note readNote(String UUID) throws IOException,IllegalArgumentException {
         //check if the note exists
         getNoteRefByUUID(UUID);
 
@@ -233,6 +234,13 @@ public class NoteSection extends Observable {
         return note;
     }
 
+    /**
+     * add an attachment to a note
+     * @param noteUUID : the note UUID
+     * @param file     : the file to attach
+     * @throws IOException
+     * @throws AttachmentAlreadyExistException
+     */
     public synchronized void addNoteAttachment(String noteUUID,Path file) throws IOException, AttachmentAlreadyExistException {
         _addNoteAttachment(noteUUID,file.getFileName().toString(),Files.size(file),false,(destination)->{
             try {
@@ -245,8 +253,8 @@ public class NoteSection extends Observable {
     }
 
     /**
-     * add an attachment
-     * @param noteUUID
+     * add an attachment to a note
+     * @param noteUUID : the note UUID
      * @param fileName
      * @param fileContent
      */
@@ -282,6 +290,13 @@ public class NoteSection extends Observable {
         }
     }
 
+    /**
+     * @param noteUUID
+     * @param fileName
+     * @return
+     * @throws AttachmentNotFoundException
+     * @throws IOException
+     */
     public synchronized byte[] readNoteAttachment(String noteUUID,String fileName) throws AttachmentNotFoundException, IOException {
         try (FileSystem fileSystem = NoteSection.getZipFileSystem(this.getPath(), false)) {
             getNoteRefByUUID(noteUUID);
@@ -315,7 +330,6 @@ public class NoteSection extends Observable {
     }
 
     private void saveNote(Note note) throws IOException {
-
         logger.debug("saving note UUID=" + note.getUUID());
         if (note==null) throw new IllegalArgumentException("note must not be null");
 
@@ -366,6 +380,12 @@ public class NoteSection extends Observable {
         }
     }
 
+    /**
+     * change the name of the given note
+     * @param noteUUID
+     * @param newName
+     * @throws IOException
+     */
     public synchronized void changeNoteName(String noteUUID, String newName) throws IOException {
         NoteRef noteRefByUUID = getNoteRefByUUID(noteUUID);
         Note note = readNote(noteRefByUUID.getUUID());
@@ -390,6 +410,10 @@ public class NoteSection extends Observable {
         notifyObservers(new NoteAdded(note.getUUID(), note.getName()));
     }
 
+    /**
+     * create a new empty note and add it to current section
+     * @throws IOException
+     */
     public synchronized void addNote() throws IOException {
         final Note note = new Note();
         String newName = "NEW NOTE";
@@ -405,7 +429,8 @@ public class NoteSection extends Observable {
 
     /**
      * remove a note from current section
-     * @param UUID : the uuid of the note to delete
+     * @param UUID
+     * @throws IOException
      */
     public synchronized void delNote(String UUID) throws IOException {
         NoteRef note = getNoteRefByUUID(UUID);
@@ -419,6 +444,12 @@ public class NoteSection extends Observable {
         Files.delete(getPath());
     }
 
+    /**
+     * save the updated content of a note
+     * @param noteUUID
+     * @param content
+     * @throws IOException
+     */
     public synchronized void saveNoteContent(String noteUUID,String content) throws IOException {
         NoteRef noteRef = getNoteRefByUUID(noteUUID);
         Note note = readNote(noteRef.getUUID());
@@ -473,12 +504,22 @@ public class NoteSection extends Observable {
         return result;
     }
 
-    public String getNoteContent(String UUID) throws IOException {
+    /**
+     * @param UUID : the requested note UUID
+     * @return the content of the requested note
+     * @throws IOException
+     */
+    public synchronized String getNoteContent(String UUID) throws IOException {
         Note note = readNote(UUID);
         return note.getContent();
     }
 
-    public void subscribeToNote(String noteUUID, Observer observer) {
+    /**
+     * start to observe requested note
+     * @param noteUUID : the requested note UUID
+     * @param observer
+     */
+    public synchronized void subscribeToNote(String noteUUID, Observer observer) {
         NoteRef noteRefByUUID = getNoteRefByUUID(noteUUID);
         try {
             Note note = readNote(noteUUID);
@@ -488,11 +529,22 @@ public class NoteSection extends Observable {
         }
     }
 
-    public void unSubscribeToNote(String noteUUID, Observer observer) {
+    /**
+     * stop observing requested note
+     * @param noteUUID : the requested note
+     * @param observer
+     */
+    public synchronized void unSubscribeToNote(String noteUUID, Observer observer) {
         NoteRef noteRefByUUID = getNoteRefByUUID(noteUUID);
         noteRefByUUID.deleteObserver(observer);
     }
 
+    /**
+     * remove an attachment from note
+     * @param attachmentRef
+     * @throws IOException
+     * @throws AttachmentNotFoundException
+     */
     public synchronized void deleteAttachment(AttachmentRef attachmentRef) throws IOException, AttachmentNotFoundException {
         logger.debug("delete attachment name=" + attachmentRef.getFileName() + " from note :" + attachmentRef.getNoteRef().getUUID());
         try (FileSystem fileSystem = NoteSection.getZipFileSystem(this.getPath(), true)) {
