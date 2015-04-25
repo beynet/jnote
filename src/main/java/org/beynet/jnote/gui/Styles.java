@@ -10,4 +10,5 @@ public class Styles {
     public static final String PASSWORD_CONTENT = "password_content";
     public static final String ALERT="alert";
     public static final String MESSAGE="message";
+    public static final String SEARCH_RESULTS="searchresults";
 }

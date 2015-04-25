@@ -82,4 +82,12 @@ public class NoteList extends ListView<NoteListItem> {
     private Stage currentStage;
     private ContextMenu ctxMenu;
 
+    public boolean containsNote(String uuid) {
+        for (NoteListItem item : list) {
+            if (item.getNoteRef().getUUID().equals(uuid)) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

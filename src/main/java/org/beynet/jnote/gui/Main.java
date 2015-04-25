@@ -25,7 +25,7 @@ import java.util.ResourceBundle;
 
 public class Main extends Application {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         BasicConfigurator.configure();
         Logger.getRootLogger().setLevel(Level.DEBUG);
         Path userHome = Paths.get((String) System.getProperty("user.home"));

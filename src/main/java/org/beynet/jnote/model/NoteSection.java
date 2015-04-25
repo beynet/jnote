@@ -1,6 +1,14 @@
 package org.beynet.jnote.model;
 
 import org.apache.log4j.Logger;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field;
+import org.apache.lucene.document.StringField;
+import org.apache.lucene.document.TextField;
+import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.TermQuery;
 import org.beynet.jnote.controler.AttachmentRef;
 import org.beynet.jnote.exceptions.AttachmentAlreadyExistException;
 import org.beynet.jnote.exceptions.AttachmentNotFoundException;
@@ -32,6 +40,7 @@ import java.util.function.Function;
  */
 @XmlRootElement(name = "NoteSection")
 public class NoteSection extends Observable {
+
     NoteSection() {
         this.UUID = java.util.UUID.randomUUID().toString();
         this.modified=this.created=System.currentTimeMillis();
@@ -189,7 +198,7 @@ public class NoteSection extends Observable {
         else return fileName.substring(0,i);
     }
 
-    private NoteRef getNoteRefByUUID(String UUID) throws IllegalArgumentException {
+    NoteRef getNoteRefByUUID(String UUID) throws IllegalArgumentException {
         NoteRef found = null ;
         for (NoteRef ref : notes) {
             if (ref.getUUID().equals(UUID)) {
@@ -369,7 +378,7 @@ public class NoteSection extends Observable {
         getNoteReferences().remove(noteRef);
         setModified(modified);
         final Marshaller marshaller=createMarshaller();
-        try (FileSystem fileSystem = NoteSection.getZipFileSystem(this.getPath(),true)) {
+        try (FileSystem fileSystem = NoteSection.getZipFileSystem(this.getPath(), true)) {
 
             saveSection(fileSystem,marshaller);
 
@@ -440,7 +449,7 @@ public class NoteSection extends Observable {
     }
 
     public void delete() throws IOException {
-        logger.debug("deleting section "+getName());
+        logger.debug("deleting section " + getName());
         Files.delete(getPath());
     }
 
@@ -448,15 +457,41 @@ public class NoteSection extends Observable {
      * save the updated content of a note
      * @param noteUUID
      * @param content
+     * @param writer
      * @throws IOException
      */
-    public synchronized void saveNoteContent(String noteUUID,String content) throws IOException {
+    public synchronized void saveNoteContent(String noteUUID, String content, IndexWriter writer,Document document) throws IOException {
         NoteRef noteRef = getNoteRefByUUID(noteUUID);
         Note note = readNote(noteRef.getUUID());
         note.setContent(content);
         saveNote(note);
         setChanged();
-        notifyObservers(new NoteContentChanged(getUUID(),noteUUID,content));
+        notifyObservers(new NoteContentChanged(getUUID(), noteUUID, content));
+        indexNote(note,writer, document);
+    }
+
+    private void indexNote(Note note,IndexWriter writer, Document document) throws IOException {
+        Term uuidTerm = new Term(LuceneConstants.NOTE_UUID,note.getUUID());
+        Query query = new TermQuery(uuidTerm);
+        writer.deleteDocuments(query);
+
+        StringBuilder content = new StringBuilder(note.getContent());
+        content.append(" ");
+        content.append(note.getName());
+        content.append(" ");
+        content.append(document.getField(LuceneConstants.SECTION_NAME));
+        content.append(" ");
+        content.append(document.getField(LuceneConstants.NOTE_BOOK_NAME));
+
+
+        StringField noteUUID = new StringField(LuceneConstants.NOTE_UUID,note.getUUID(), Field.Store.YES);
+        TextField noteContent = new TextField(LuceneConstants.NOTE_CONTENT,content.toString(), Field.Store.YES);
+        TextField noteName = new TextField(LuceneConstants.NOTE_NAME,note.getName(), Field.Store.YES);
+        document.add(noteUUID);
+        document.add(noteContent);
+        document.add(noteName);
+        writer.addDocument(document);
+        writer.commit();
     }
 
     private long   modified ;

@@ -1,13 +1,25 @@
 package org.beynet.jnote.model;
 
 import org.apache.log4j.Logger;
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field;
+import org.apache.lucene.document.StringField;
+import org.apache.lucene.index.*;
+import org.apache.lucene.search.*;
+import org.apache.lucene.store.Directory;
+import org.apache.lucene.store.FSDirectory;
+import org.apache.lucene.util.Version;
 import org.beynet.jnote.controler.AttachmentRef;
+import org.beynet.jnote.controler.NoteBookRef;
 import org.beynet.jnote.controler.NoteRef;
 import org.beynet.jnote.controler.NoteSectionRef;
 import org.beynet.jnote.exceptions.AttachmentAlreadyExistException;
 import org.beynet.jnote.exceptions.AttachmentNotFoundException;
 import org.beynet.jnote.model.events.model.NewNoteBookEvent;
 import org.beynet.jnote.model.events.model.OnExitEvent;
+import sun.security.util.Password;
 
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
@@ -21,14 +33,23 @@ import java.util.*;
  * Created by beynet on 06/04/2015.
  */
 public class Model extends Observable implements FileVisitor<Path> {
-    private static Model _instance = null;
 
-    Model(Path rootDir) {
+    private static Model _instance = null;
+    private final IndexWriter writer;
+
+    Model(Path rootDir) throws IOException {
         this.rootDir = rootDir;
         loadNoteBooks();
+        //create lucene index
+        Directory dir = FSDirectory.open(this.rootDir.resolve(".indexes").toFile());
+        Analyzer analyzer = new StandardAnalyzer();
+        IndexWriterConfig iwc = new IndexWriterConfig(Version.LUCENE_4_10_1, analyzer);
+
+        iwc.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
+        this.writer = new IndexWriter(dir, iwc);
     }
 
-    public static Model createInstance(Path rootDir) {
+    public static Model createInstance(Path rootDir) throws IOException {
         if (!Files.exists(rootDir)) {
             try {
                 Files.createDirectories(rootDir);
@@ -61,9 +82,9 @@ public class Model extends Observable implements FileVisitor<Path> {
 
     @Override
     public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-        if (depth<1) {
+        if (depth<1 ) {
             depth++;
-            if (depth==1) {
+            if (depth==1 && !dir.getFileName().toString().startsWith(".")) {
                 currentNoteBook = new NoteBook(dir);
                 noteBooks.put(currentNoteBook.getUUID(), currentNoteBook);
             }
@@ -130,7 +151,11 @@ public class Model extends Observable implements FileVisitor<Path> {
         getNoteBookByUUID(noteBookUUID).createNewEmptySection();
     }
     public void saveNoteContent(String noteBookUUID, String sectionUUID, String noteUUID, String content) throws IOException{
-        getNoteBookByUUID(noteBookUUID).saveNoteContent(sectionUUID, noteUUID, content);
+        NoteBook noteBookByUUID = getNoteBookByUUID(noteBookUUID);
+        Document document=new Document();
+        StringField noteBookName = new StringField(LuceneConstants.NOTE_BOOK_NAME,noteBookByUUID.getName(), Field.Store.YES);
+        document.add(noteBookName);
+        noteBookByUUID.saveNoteContent(sectionUUID, noteUUID, content, writer, document);
     }
 
     public void changeSectionName(String noteBookUUID, String sectionUUID, String name) throws IOException{
@@ -196,7 +221,68 @@ public class Model extends Observable implements FileVisitor<Path> {
         getNoteBookByUUID(attachmentRef.getNoteRef().getNoteSectionRef().getNoteBookRef().getUUID()).deleteAttachment(attachmentRef);
     }
     public void saveAttachment(AttachmentRef attachmentRef, Path path) throws IOException, AttachmentNotFoundException {
-        getNoteBookByUUID(attachmentRef.getNoteRef().getNoteSectionRef().getNoteBookRef().getUUID()).saveAttachment(attachmentRef,path);
+        getNoteBookByUUID(attachmentRef.getNoteRef().getNoteSectionRef().getNoteBookRef().getUUID()).saveAttachment(attachmentRef, path);
+    }
+
+    public List<NoteRef> getMatchingNotes(String query) throws IOException {
+        List<NoteRef> result = new ArrayList<>();
+        try (IndexReader reader = createReader()) {
+            IndexSearcher searcher = new IndexSearcher(reader);
+
+            BooleanQuery booleanQuery = new BooleanQuery();
+
+            Query patternQuery = new WildcardQuery(new Term(LuceneConstants.NOTE_CONTENT, "*" + query + "*"));
+            booleanQuery.add(patternQuery, BooleanClause.Occur.MUST);
+
+            TopScoreDocCollector collector = TopScoreDocCollector.create(1000, true);
+
+            searcher.search(booleanQuery, collector);
+            ScoreDoc[] hits = collector.topDocs().scoreDocs;
+            for (int i = 0; i < hits.length; ++i) {
+                int docId = hits[i].doc;
+                Document document = searcher.doc(docId);
+                Optional<NoteRef> noteRef = constructNoteRefFromDocument(document);
+                noteRef.ifPresent((p)->result.add(p));
+            }
+            return result;
+        }
+    }
+
+    private Optional<NoteRef> constructNoteRefFromDocument(Document document) {
+        Optional<NoteRef> result = Optional.empty();
+        String noteBookName = document.get(LuceneConstants.NOTE_BOOK_NAME);
+        String sectionUUID = document.get(LuceneConstants.SECTION_UUID);
+        String noteUUID = document.get(LuceneConstants.NOTE_UUID);
+        String noteName = document.get(LuceneConstants.NOTE_NAME);
+
+        NoteBook noteBook = null ;
+        synchronized (noteBooks) {
+            for (Map.Entry<String,NoteBook> entry :noteBooks.entrySet()) {
+                NoteBook value = entry.getValue();
+                if (value.getName().equals(noteBookName)) {
+                    noteBook = value;
+                    break;
+                }
+            }
+        }
+        if (noteBook!=null) {
+            NoteSection section = null;
+            try {
+                section = noteBook.getSectionByUUID(sectionUUID);
+            }catch(Exception e) {
+
+            }
+            if (section!=null) {
+                NoteBookRef noteBookRef = new NoteBookRef(noteBook.getUUID(),noteBook.getName());
+                NoteSectionRef sectionRef = new NoteSectionRef(noteBookRef,section.getUUID(),section.getName());
+                result=Optional.of(new NoteRef(sectionRef,noteUUID,noteName));
+            }
+        }
+        return result;
+    }
+
+    private IndexReader createReader() throws IOException {
+        return DirectoryReader.open(writer, true);
     }
 
     private Path rootDir ;

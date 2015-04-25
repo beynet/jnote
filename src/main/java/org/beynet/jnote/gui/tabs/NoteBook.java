@@ -7,6 +7,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.stage.Stage;
 import org.beynet.jnote.controler.Controller;
 import org.beynet.jnote.controler.NoteBookRef;
+import org.beynet.jnote.controler.NoteRef;
 import org.beynet.jnote.gui.dialogs.Alert;
 import org.beynet.jnote.model.events.model.NewNoteBookEvent;
 import org.beynet.jnote.model.events.model.OnExitEvent;
@@ -42,7 +43,7 @@ public class NoteBook extends TabPane implements Observer ,NoteBookEventVisitor 
         getTabs().clear();
         getTabs().add(addNoteTab);
         if (this.currentNoteBook!=null) {
-            Controller.unSubscribeToNoteBook(currentNoteBook,this);
+            Controller.unSubscribeToNoteBook(this.currentNoteBook,this);
         }
         this.currentNoteBook=currentNoteBook;
         if (this.currentNoteBook!=null) {
@@ -108,6 +109,19 @@ public class NoteBook extends TabPane implements Observer ,NoteBookEventVisitor 
         for (NoteSection section:mySections) {
             if (section.getUUID().equals(sectionRenamed.getUUID())) {
                 section.changeName(sectionRenamed.getName());
+            }
+        }
+    }
+
+    public void selectSectionAndNote(NoteRef noteRef) {
+        for (Tab tab:getTabs()) {
+            if (tab instanceof NoteSection) {
+                NoteSection section = (NoteSection)tab;
+                if (section.getUUID().equals(noteRef.getNoteSectionRef().getUUID())) {
+                    getSelectionModel().select(section);
+                    Platform.runLater(()->section.selectNote(noteRef));
+                    break;
+                }
             }
         }
     }

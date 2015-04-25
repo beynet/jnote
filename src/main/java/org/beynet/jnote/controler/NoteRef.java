@@ -6,7 +6,6 @@ package org.beynet.jnote.controler;
 public class NoteRef {
     private final String UUID;
     private final String name;
-    private String content;
     private final NoteSectionRef noteSectionRef;
 
     public NoteRef(NoteSectionRef noteSectionRef,String UUID,String name) {

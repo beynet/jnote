@@ -1,6 +1,11 @@
 package org.beynet.jnote.model;
 
 import org.apache.log4j.Logger;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field;
+import org.apache.lucene.document.StringField;
+import org.apache.lucene.document.TextField;
+import org.apache.lucene.index.IndexWriter;
 import org.beynet.jnote.controler.AttachmentRef;
 import org.beynet.jnote.controler.NoteRef;
 import org.beynet.jnote.exceptions.AttachmentAlreadyExistException;
@@ -17,6 +22,8 @@ import java.util.*;
  * NoteBook : this is mainly a list of {@link NoteSection}
  */
 public class NoteBook extends Observable {
+
+
 
     public NoteBook(Path path) {
         this.path = path ;
@@ -135,8 +142,13 @@ public class NoteBook extends Observable {
         return section;
     }
 
-    public void saveNoteContent(String uuid, String noteUUID, String content) throws IllegalArgumentException,IOException {
-        getSectionByUUID(uuid).saveNoteContent(noteUUID,content);
+    public void saveNoteContent(String uuid, String noteUUID, String content, IndexWriter writer,Document document) throws IllegalArgumentException,IOException {
+        NoteSection sectionByUUID = getSectionByUUID(uuid);
+        StringField sectionUUID = new StringField(LuceneConstants.SECTION_UUID,sectionByUUID.getUUID(), Field.Store.YES);
+        TextField  sectionName = new TextField(LuceneConstants.SECTION_NAME,sectionByUUID.getName(), Field.Store.YES);
+        document.add(sectionUUID);
+        document.add(sectionName);
+        sectionByUUID.saveNoteContent(noteUUID, content, writer, document);
     }
 
     public void changeSectionName(String uuid, String name) throws IllegalArgumentException,IOException {

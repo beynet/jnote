@@ -6,6 +6,7 @@ import org.beynet.jnote.model.Model;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Observer;
 
 /**
@@ -96,6 +97,10 @@ public class Controller {
     }
 
     public static void saveAttachment(AttachmentRef attachmentRef, Path path) throws IOException, AttachmentNotFoundException {
-        Model.getInstance().saveAttachment(attachmentRef,path);
+        Model.getInstance().saveAttachment(attachmentRef, path);
+    }
+
+    public static List<NoteRef> getMatchingNotes(String query) throws IOException {
+        return Model.getInstance().getMatchingNotes(query);
     }
 }

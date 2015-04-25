@@ -185,7 +185,7 @@ public class NoteSection extends Tab implements Observer,SectionEventVisitor {
         }
     }
     private void save(NoteRef selectedItem) {
-        logger.debug("saving note content = "+content.getHtmlText()+" note uuid="+selectedItem.getUUID());
+        logger.debug("saving note content = " + content.getHtmlText() + " note uuid=" + selectedItem.getUUID());
         if (selectedItem!=null) {
             try {
                 Controller.saveNoteContent(noteSectionRef.getNoteBookRef(), noteSectionRef.getUUID(), selectedItem.getUUID(), content.getHtmlText());
@@ -216,7 +216,9 @@ public class NoteSection extends Tab implements Observer,SectionEventVisitor {
     public void visit(NoteAdded noteAdded) {
         if (isSelected() == true) {
             logger.debug("add new note name=" + noteAdded.getName() + " UUID=" + noteAdded.getUUID() + " to section " + noteSectionRef.getSectionName());
-            noteList.getList().add(new NoteListItem(new NoteRef(noteSectionRef, noteAdded.getUUID(), noteAdded.getName()), false));
+            if (!noteList.containsNote( noteAdded.getUUID())) {
+                noteList.getList().add(new NoteListItem(new NoteRef(noteSectionRef, noteAdded.getUUID(), noteAdded.getName()), false));
+            }
         }
     }
 
@@ -244,6 +246,18 @@ public class NoteSection extends Tab implements Observer,SectionEventVisitor {
         }
     }
 
+    /**
+     * select requested note
+     * @param noteRef
+     */
+    public void selectNote(NoteRef noteRef) {
+        for (NoteListItem noteListItem : noteList.getItems()) {
+            if (noteListItem.getNoteRef().getUUID().equals(noteRef.getUUID())) {
+                noteList.getSelectionModel().select(noteListItem);
+            }
+        }
+    }
+
     private JNoteEditor content;
     private NoteSectionRef noteSectionRef;
     private Label labeltitle ;
@@ -252,4 +266,5 @@ public class NoteSection extends Tab implements Observer,SectionEventVisitor {
     private NoteList noteList;
 
     private final static Logger logger = Logger.getLogger(NoteSection.class);
+
 }
