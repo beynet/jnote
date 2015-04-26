@@ -375,7 +375,12 @@ public class NoteSection extends Observable {
 
     private void delNoteFromZip(NoteRef noteRef) throws IOException {
         long modified = System.currentTimeMillis();
-        getNoteReferences().remove(noteRef);
+        for (NoteRef n : getNoteReferences()) {
+            if (n.getUUID().equals(noteRef.getUUID())) {
+                getNoteReferences().remove(n);
+                break;
+            }
+        }
         setModified(modified);
         final Marshaller marshaller=createMarshaller();
         try (FileSystem fileSystem = NoteSection.getZipFileSystem(this.getPath(), true)) {
@@ -384,7 +389,7 @@ public class NoteSection extends Observable {
 
             // deleting the note
             // ****************
-            Path notePath = fileSystem.getPath(UUID+".xml");
+            Path notePath = fileSystem.getPath(noteRef.getUUID()+".xml");
             if (Files.exists(notePath)) Files.delete(notePath);
         }
     }
@@ -438,11 +443,11 @@ public class NoteSection extends Observable {
 
     /**
      * remove a note from current section
-     * @param UUID
+     * @param noteUUID
      * @throws IOException
      */
-    public synchronized void delNote(String UUID) throws IOException {
-        NoteRef note = getNoteRefByUUID(UUID);
+    public synchronized void delNote(String noteUUID) throws IOException {
+        NoteRef note = getNoteRefByUUID(noteUUID);
         delNoteFromZip(note);
         setChanged();
         notifyObservers(new NoteDeleted(note.getUUID()));
@@ -494,25 +499,7 @@ public class NoteSection extends Observable {
         writer.commit();
     }
 
-    private long   modified ;
-    private long   created  ;
-    private List<NoteRef> notes = new ArrayList<>();
-    private String UUID     ;
-    private Path   path     ;
 
-    private static final JAXBContext jaxbContext ;
-    private static final Logger logger = Logger.getLogger(NoteSection.class);
-
-    static {
-        try {
-            jaxbContext = JAXBContext.newInstance(NoteSection.class,Note.class);
-        } catch (JAXBException e) {
-            throw new RuntimeException("initialization error",e);
-        }
-    }
-
-
-    private static final String NOTE_SECTION_FILE_NAME = "notesection.xml";
 
     @Override
     public boolean equals(Object o) {
@@ -618,4 +605,24 @@ public class NoteSection extends Observable {
             Files.copy(path,destination.resolve(attachmentRef.getFileName()), StandardCopyOption.REPLACE_EXISTING);
         }
     }
+
+    private long   modified ;
+    private long   created  ;
+    private List<NoteRef> notes = new ArrayList<>();
+    private String UUID     ;
+    private Path   path     ;
+
+    private static final JAXBContext jaxbContext ;
+    private static final Logger logger = Logger.getLogger(NoteSection.class);
+
+    static {
+        try {
+            jaxbContext = JAXBContext.newInstance(NoteSection.class,Note.class);
+        } catch (JAXBException e) {
+            throw new RuntimeException("initialization error",e);
+        }
+    }
+
+
+    private static final String NOTE_SECTION_FILE_NAME = "notesection.xml";
 }
