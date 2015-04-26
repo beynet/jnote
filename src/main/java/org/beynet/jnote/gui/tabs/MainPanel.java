@@ -84,7 +84,9 @@ public class MainPanel extends VBox implements Observer,ModelEventVisitor {
         searchTooltip.setGraphic(lst);
         searchTooltip.getStyleClass().add(Styles.SEARCH_RESULTS);
         searchTooltip.setAutoHide(true);
+        searchTooltip.setHideOnEscape(true);
 //        search.setTooltip(searchTooltip);
+        // on action we display the tooltip
         search.setOnAction(event -> {
             String text = search.getText();
             if (text!=null && !"".equals(text)) {
@@ -106,7 +108,9 @@ public class MainPanel extends VBox implements Observer,ModelEventVisitor {
                     Platform.runLater(() -> new Alert(currentStage, "error running search").show());
                 }
             }
-
+        });
+        searchTooltip.setOnHidden(event -> {
+            search.setTooltip(null);
         });
         centerPane.add(search, 1, 0);
 
@@ -114,12 +118,9 @@ public class MainPanel extends VBox implements Observer,ModelEventVisitor {
         getChildren().add(notes);
 
         Controller.subscribeToModel(this);
-        noteBooks.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent event) {
-                selected = noteBooks.getValue();
-                notes.changeCurrentNoteBook(selected);
-            }
+        noteBooks.setOnAction(event -> {
+            selected = noteBooks.getValue();
+            notes.changeCurrentNoteBook(selected);
         });
     }
 
