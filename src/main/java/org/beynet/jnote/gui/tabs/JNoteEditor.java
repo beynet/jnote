@@ -16,6 +16,7 @@ import org.beynet.jnote.model.events.note.AttachmentAddedToNote;
 import org.beynet.jnote.model.events.note.AttachmentRemovedFromNote;
 import org.beynet.jnote.model.events.note.NoteEvent;
 import org.beynet.jnote.model.events.note.NoteEventVisitor;
+import org.beynet.jnote.utils.I18NHelper;
 
 import java.util.Observable;
 import java.util.Observer;
@@ -31,7 +32,7 @@ public class JNoteEditor extends HTMLEditor implements Observer,NoteEventVisitor
             ToolBar bar = (ToolBar) node;
             attachmentCombo = new ComboBox<>(attachments);
             attachmentCombo.setCellFactory(param -> new AttachmentRefCell());
-            attachmentCombo.setPromptText("attachments");
+            attachmentCombo.setPromptText(I18NHelper.getLabelResourceBundle().getString("attachments"));
             bar.getItems().add(attachmentCombo);
             attachmentCombo.setOnAction(event -> {
                 final AttachmentRef selected = attachmentCombo.getSelectionModel().getSelectedItem();
