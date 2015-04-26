@@ -71,8 +71,10 @@ public class NoteSection extends Tab implements Observer,SectionEventVisitor {
         // -------------------
         noteList.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             if (oldValue != null) {
-                save(oldValue.getNoteRef());
-                content.onNoteUnSelected(oldValue.getNoteRef());
+                if (noteList.getList().contains(oldValue)) {
+                    save(oldValue.getNoteRef());
+                    content.onNoteUnSelected(oldValue.getNoteRef());
+                }
             }
             if (newValue != null) {
                 NoteRef noteRef = newValue.getNoteRef();
