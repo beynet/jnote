@@ -78,10 +78,6 @@ public class NoteList extends ListView<NoteListItem> {
         return list;
     }
 
-    private ObservableList<NoteListItem> list ;
-    private Stage currentStage;
-    private ContextMenu ctxMenu;
-
     public boolean containsNote(String uuid) {
         for (NoteListItem item : list) {
             if (item.getNoteRef().getUUID().equals(uuid)) {
@@ -90,4 +86,10 @@ public class NoteList extends ListView<NoteListItem> {
         }
         return false;
     }
+
+    private ObservableList<NoteListItem> list ;
+    private Stage currentStage;
+    private ContextMenu ctxMenu;
+
+
 }
