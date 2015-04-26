@@ -103,4 +103,8 @@ public class Controller {
     public static List<NoteRef> getMatchingNotes(String query) throws IOException {
         return Model.getInstance().getMatchingNotes(query);
     }
+
+    public static void reIndexAllNotes() throws IOException {
+        Model.getInstance().reIndexAllNotes();
+    }
 }

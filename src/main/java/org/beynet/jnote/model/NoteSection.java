@@ -492,6 +492,10 @@ public class NoteSection extends Observable {
         StringField noteUUID = new StringField(LuceneConstants.NOTE_UUID,note.getUUID(), Field.Store.YES);
         TextField noteContent = new TextField(LuceneConstants.NOTE_CONTENT,content.toString(), Field.Store.YES);
         TextField noteName = new TextField(LuceneConstants.NOTE_NAME,note.getName(), Field.Store.YES);
+
+        document.removeField(LuceneConstants.NOTE_UUID);
+        document.removeField(LuceneConstants.NOTE_CONTENT);
+        document.removeField(LuceneConstants.NOTE_NAME);
         document.add(noteUUID);
         document.add(noteContent);
         document.add(noteName);
@@ -606,6 +610,15 @@ public class NoteSection extends Observable {
         }
     }
 
+
+    public synchronized void reIndexAllNotes(IndexWriter writer,Document document) throws IOException {
+        for (NoteRef noteRef:notes) {
+            Note note = readNote(noteRef.getUUID());
+            indexNote(note,writer,document);
+        }
+    }
+
+
     private long   modified ;
     private long   created  ;
     private List<NoteRef> notes = new ArrayList<>();
@@ -625,4 +638,5 @@ public class NoteSection extends Observable {
 
 
     private static final String NOTE_SECTION_FILE_NAME = "notesection.xml";
+
 }

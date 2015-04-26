@@ -142,12 +142,19 @@ public class NoteBook extends Observable {
         return section;
     }
 
-    public void saveNoteContent(String uuid, String noteUUID, String content, IndexWriter writer,Document document) throws IllegalArgumentException,IOException {
-        NoteSection sectionByUUID = getSectionByUUID(uuid);
+    private void addNoteBookInformationsToDocument(NoteSection sectionByUUID,Document document) {
         StringField sectionUUID = new StringField(LuceneConstants.SECTION_UUID,sectionByUUID.getUUID(), Field.Store.YES);
         TextField  sectionName = new TextField(LuceneConstants.SECTION_NAME,sectionByUUID.getName(), Field.Store.YES);
+        StringField noteBookName = new StringField(LuceneConstants.NOTE_BOOK_NAME,getName(), Field.Store.YES);
         document.add(sectionUUID);
         document.add(sectionName);
+        document.add(noteBookName);
+    }
+
+    public void saveNoteContent(String uuid, String noteUUID, String content, IndexWriter writer) throws IllegalArgumentException,IOException {
+        Document document = new Document();
+        NoteSection sectionByUUID = getSectionByUUID(uuid);
+        addNoteBookInformationsToDocument(sectionByUUID,document);
         sectionByUUID.saveNoteContent(noteUUID, content, writer, document);
     }
 
@@ -214,6 +221,15 @@ public class NoteBook extends Observable {
     }
     public void saveAttachment(AttachmentRef attachmentRef, Path path) throws IOException, AttachmentNotFoundException {
         getSectionByUUID(attachmentRef.getNoteRef().getNoteSectionRef().getUUID()).saveAttachment(attachmentRef,path);
+    }
+    public void reIndexAllNotes(IndexWriter writer) throws IOException {
+        synchronized (sectionsMap) {
+            for (NoteSection noteSection : sectionsMap.values()) {
+                Document document  = new Document();
+                addNoteBookInformationsToDocument(noteSection,document);
+                noteSection.reIndexAllNotes(writer,document);
+            }
+        }
     }
 
     private Path path;

@@ -152,10 +152,7 @@ public class Model extends Observable implements FileVisitor<Path> {
     }
     public void saveNoteContent(String noteBookUUID, String sectionUUID, String noteUUID, String content) throws IOException{
         NoteBook noteBookByUUID = getNoteBookByUUID(noteBookUUID);
-        Document document=new Document();
-        StringField noteBookName = new StringField(LuceneConstants.NOTE_BOOK_NAME,noteBookByUUID.getName(), Field.Store.YES);
-        document.add(noteBookName);
-        noteBookByUUID.saveNoteContent(sectionUUID, noteUUID, content, writer, document);
+        noteBookByUUID.saveNoteContent(sectionUUID, noteUUID, content, writer);
     }
 
     public void changeSectionName(String noteBookUUID, String sectionUUID, String name) throws IOException{
@@ -292,4 +289,12 @@ public class Model extends Observable implements FileVisitor<Path> {
     private final static Logger logger = Logger.getLogger(Model.class);
 
 
+    public void reIndexAllNotes() throws IOException {
+        writer.deleteAll();
+        synchronized (noteBooks) {
+            for (Map.Entry<String,NoteBook> entry : noteBooks.entrySet()) {
+                entry.getValue().reIndexAllNotes(writer);
+            }
+        }
+    }
 }

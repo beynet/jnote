@@ -1,6 +1,7 @@
 package org.beynet.jnote.gui;
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.control.Menu;
@@ -94,6 +95,20 @@ public class Main extends Application {
                 addNewNoteBook();
             });
             file.getItems().add(addNoteBook);
+        }
+
+        // reindex all notes
+        // -----------------------
+        {
+            final MenuItem reindexAll = new MenuItem(labelResourceBundle.getString("reindexall"));
+            reindexAll.setOnAction((evt) -> {
+                try {
+                    Controller.reIndexAllNotes();
+                } catch (IOException e) {
+                    Platform.runLater(()->new Alert(currentStage,"unable to index"+e.getMessage()).show());
+                }
+            });
+            file.getItems().add(reindexAll);
         }
 
         // delete current notebook
