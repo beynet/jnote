@@ -129,10 +129,11 @@ public class NoteSection extends Observable {
      * @param newName
      * @throws IOException
      */
-    public void changeName(String newName) throws IOException {
-        Path newPath = path.getParent().resolve(newName + ".zip");
+    public void changeName(String noteBookName,String newName,IndexWriter writer) throws IOException {
+        Path newPath = path.resolveSibling(newName + ".zip");
         Files.move(path, newPath);
         path=newPath;
+        reIndexAllNotes(noteBookName,writer);
     }
 
     /**
@@ -465,22 +466,33 @@ public class NoteSection extends Observable {
      * @param writer
      * @throws IOException
      */
-    public synchronized void saveNoteContent(String noteUUID, String content, IndexWriter writer,Document document) throws IOException {
+    public synchronized void saveNoteContent(String noteBookName,String noteUUID, String content, IndexWriter writer) throws IOException {
         NoteRef noteRef = getNoteRefByUUID(noteUUID);
         Note note = readNote(noteRef.getUUID());
         note.setContent(content);
         saveNote(note);
         setChanged();
         notifyObservers(new NoteContentChanged(getUUID(), noteUUID, content));
-        indexNote(note,writer, document);
+        indexNote(noteBookName,note,writer);
     }
 
-    private void indexNote(Note note,IndexWriter writer, Document document) throws IOException {
+    private void indexNote(String noteBookName,Note note,IndexWriter writer) throws IOException {
+
+        StringField sectionUUID = new StringField(LuceneConstants.SECTION_UUID,getUUID(), Field.Store.YES);
+        TextField  sectionName = new TextField(LuceneConstants.SECTION_NAME,getName(), Field.Store.YES);
+        StringField noteBookNameField = new StringField(LuceneConstants.NOTE_BOOK_NAME,noteBookName, Field.Store.YES);
+
+        Document document = new Document();
+        document.add(sectionUUID);
+        document.add(sectionName);
+        document.add(noteBookNameField);
+
         Term uuidTerm = new Term(LuceneConstants.NOTE_UUID,note.getUUID());
         Query query = new TermQuery(uuidTerm);
         writer.deleteDocuments(query);
-
-        StringBuilder content = new StringBuilder(note.getContent());
+        String noteContent = note.getContent();
+        if (noteContent==null) noteContent="";
+        StringBuilder content = new StringBuilder(noteContent);
         content.append(" ");
         content.append(note.getName());
         content.append(" ");
@@ -490,14 +502,12 @@ public class NoteSection extends Observable {
 
 
         StringField noteUUID = new StringField(LuceneConstants.NOTE_UUID,note.getUUID(), Field.Store.YES);
-        TextField noteContent = new TextField(LuceneConstants.NOTE_CONTENT,content.toString(), Field.Store.YES);
+        TextField noteContentField = new TextField(LuceneConstants.NOTE_CONTENT,content.toString(), Field.Store.YES);
         TextField noteName = new TextField(LuceneConstants.NOTE_NAME,note.getName(), Field.Store.YES);
 
-        document.removeField(LuceneConstants.NOTE_UUID);
-        document.removeField(LuceneConstants.NOTE_CONTENT);
-        document.removeField(LuceneConstants.NOTE_NAME);
+
         document.add(noteUUID);
-        document.add(noteContent);
+        document.add(noteContentField);
         document.add(noteName);
         writer.addDocument(document);
         writer.commit();
@@ -610,11 +620,16 @@ public class NoteSection extends Observable {
         }
     }
 
-
-    public synchronized void reIndexAllNotes(IndexWriter writer,Document document) throws IOException {
+    /**
+     *
+     * @param noteBookName
+     * @param writer
+     * @throws IOException
+     */
+    public synchronized void reIndexAllNotes(String noteBookName,IndexWriter writer) throws IOException {
         for (NoteRef noteRef:notes) {
             Note note = readNote(noteRef.getUUID());
-            indexNote(note,writer,document);
+            indexNote(noteBookName,note,writer);
         }
     }
 

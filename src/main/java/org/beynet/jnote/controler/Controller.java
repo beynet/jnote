@@ -107,4 +107,8 @@ public class Controller {
     public static void reIndexAllNotes() throws IOException {
         Model.getInstance().reIndexAllNotes();
     }
+
+    public static void renameNoteBook(String currentUUID, String name) throws IOException {
+        Model.getInstance().renameNoteBook(currentUUID,name);
+    }
 }

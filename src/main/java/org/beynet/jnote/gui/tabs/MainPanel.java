@@ -1,14 +1,13 @@
 package org.beynet.jnote.gui.tabs;
 
 import javafx.application.Platform;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.geometry.HPos;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
-import javafx.scene.control.ComboBox;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Tooltip;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
@@ -18,10 +17,7 @@ import org.beynet.jnote.controler.NoteBookRef;
 import org.beynet.jnote.controler.NoteRef;
 import org.beynet.jnote.gui.Styles;
 import org.beynet.jnote.gui.dialogs.Alert;
-import org.beynet.jnote.model.events.model.ModelEvent;
-import org.beynet.jnote.model.events.model.ModelEventVisitor;
-import org.beynet.jnote.model.events.model.NewNoteBookEvent;
-import org.beynet.jnote.model.events.model.OnExitEvent;
+import org.beynet.jnote.model.events.model.*;
 import org.beynet.jnote.utils.I18NHelper;
 
 import java.io.IOException;
@@ -35,7 +31,6 @@ import java.util.Observer;
 public class MainPanel extends VBox implements Observer,ModelEventVisitor {
     public MainPanel(Stage currentStage) {
         this.currentStage=currentStage;
-        selected =null;
         notes=new NoteBook(this.currentStage);
 
         // this hbox will contain note books list and search menu
@@ -65,10 +60,8 @@ public class MainPanel extends VBox implements Observer,ModelEventVisitor {
 
 
 
-
-        noteBooksList = FXCollections.observableArrayList();
-        noteBooks=new ComboBox<>(noteBooksList);
-        centerPane.add(noteBooks,0,0);
+        n = new NoteBookList(currentStage,notes);
+        centerPane.add(n,0,0);
 
         // create search control
         // **********************
@@ -78,20 +71,25 @@ public class MainPanel extends VBox implements Observer,ModelEventVisitor {
         search.setAlignment(Pos.BASELINE_RIGHT);
         searchTooltip = new Tooltip();
 
-        SearchResultsList lst= new SearchResultsList(currentStage,noteBooks,notes,searchTooltip);
+        SearchResultsList lst= new SearchResultsList(currentStage,n,notes,searchTooltip);
         searchTooltip.setGraphic(lst);
         searchTooltip.getStyleClass().add(Styles.SEARCH_RESULTS);
         searchTooltip.setAutoHide(true);
         searchTooltip.setHideOnEscape(true);
 //        search.setTooltip(searchTooltip);
         // on action we display the tooltip
+        search.setOnKeyPressed(event -> {
+            if (!KeyCode.ENTER.equals(event.getCode())) {
+                searchTooltip.hide();
+            }
+        });
         search.setOnAction(event -> {
             String text = search.getText();
-            if (text!=null && !"".equals(text)) {
+            if (text != null && !"".equals(text)) {
                 try {
-                    while(lst.getItems().size()>0) lst.getItems().remove(0);
-                    List<NoteRef> result=Controller.getMatchingNotes(text);
-                    if (result!=null) {
+                    while (lst.getItems().size() > 0) lst.getItems().remove(0);
+                    List<NoteRef> result = Controller.getMatchingNotes(text);
+                    if (result != null) {
                         for (NoteRef ref : result) {
                             lst.getItems().add(ref);
                         }
@@ -116,14 +114,10 @@ public class MainPanel extends VBox implements Observer,ModelEventVisitor {
         getChildren().add(notes);
 
         Controller.subscribeToModel(this);
-        noteBooks.setOnAction(event -> {
-            selected = noteBooks.getValue();
-            notes.changeCurrentNoteBook(selected);
-        });
     }
 
     public String getSelectedNoteBookUUID() {
-        return selected.getUUID();
+        return n.getSelected().getUUID();
     }
 
 
@@ -135,7 +129,7 @@ public class MainPanel extends VBox implements Observer,ModelEventVisitor {
 
     @Override
     public void visit(NewNoteBookEvent newNoteBookEvent) {
-        noteBooksList.add(new NoteBookRef(newNoteBookEvent.getUUID(),newNoteBookEvent.getName()));
+        n.getItems().add(new NoteBookRef(newNoteBookEvent.getUUID(), newNoteBookEvent.getName()));
     }
 
     @Override
@@ -143,12 +137,28 @@ public class MainPanel extends VBox implements Observer,ModelEventVisitor {
         notes.onExit();
     }
 
+    @Override
+    public void visit(NoteBookRenamed noteBookRenamed) {
+        for (NoteBookRef noteBookRef : n.getItems()) {
+            if (noteBookRef.getUUID().equals(noteBookRenamed.getUUID())) {
+                noteBookRef.changeName(noteBookRenamed.getCurrent());
+                break;
+            }
+        }
 
-    private ObservableList<NoteBookRef> noteBooksList ;
-    private ComboBox<NoteBookRef> noteBooks ;
+    }
+
+
+    private NoteBookList n;
+    /*private ObservableList<NoteBookRef> noteBooksList ;
+    private ComboBox<NoteBookRef> noteBooks ;*/
     private NoteBook notes;
-    private NoteBookRef selected;
+
     private Stage currentStage;
     private TextField search;
     private Tooltip searchTooltip;
+
+    public String getSelectedNoteBookName() {
+        return n.getSelected()!=null?n.getSelected().getName():null;
+    }
 }

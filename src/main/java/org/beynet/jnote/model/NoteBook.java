@@ -1,10 +1,6 @@
 package org.beynet.jnote.model;
 
 import org.apache.log4j.Logger;
-import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field;
-import org.apache.lucene.document.StringField;
-import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.IndexWriter;
 import org.beynet.jnote.controler.AttachmentRef;
 import org.beynet.jnote.controler.NoteRef;
@@ -15,15 +11,17 @@ import org.beynet.jnote.model.events.notebook.NoteSectionDeleted;
 import org.beynet.jnote.model.events.notebook.SectionRenamed;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Observable;
+import java.util.Observer;
 
 /**
- * NoteBook : this is mainly a list of {@link NoteSection}
+ * NoteBook : this is mainly a list of {@link NoteSection} contained in a filesystem directory
  */
 public class NoteBook extends Observable {
-
-
 
     public NoteBook(Path path) {
         this.path = path ;
@@ -35,8 +33,25 @@ public class NoteBook extends Observable {
         return UUID;
     }
 
+    /**
+     * @return current note notebook name, ie the directory name
+     */
     public String getName() {
         return this.path.getFileName().toString();
+    }
+
+    /**
+     * change current note book name
+     * @param newName
+     * @throws IOException
+     */
+    public void changeName(String newName) throws IOException {
+        String previous = getName();
+        logger.debug("changing notebook name from "+previous+" to "+newName);
+        Path target = this.path.resolveSibling(newName);
+        if (Files.exists(target)) throw new IOException("target file already exists");
+        Files.move(this.path, target);
+        this.path=target;
     }
 
     @Override
@@ -142,25 +157,14 @@ public class NoteBook extends Observable {
         return section;
     }
 
-    private void addNoteBookInformationsToDocument(NoteSection sectionByUUID,Document document) {
-        StringField sectionUUID = new StringField(LuceneConstants.SECTION_UUID,sectionByUUID.getUUID(), Field.Store.YES);
-        TextField  sectionName = new TextField(LuceneConstants.SECTION_NAME,sectionByUUID.getName(), Field.Store.YES);
-        StringField noteBookName = new StringField(LuceneConstants.NOTE_BOOK_NAME,getName(), Field.Store.YES);
-        document.add(sectionUUID);
-        document.add(sectionName);
-        document.add(noteBookName);
-    }
-
     public void saveNoteContent(String uuid, String noteUUID, String content, IndexWriter writer) throws IllegalArgumentException,IOException {
-        Document document = new Document();
         NoteSection sectionByUUID = getSectionByUUID(uuid);
-        addNoteBookInformationsToDocument(sectionByUUID,document);
-        sectionByUUID.saveNoteContent(noteUUID, content, writer, document);
+        sectionByUUID.saveNoteContent(getName(),noteUUID, content, writer);
     }
 
-    public void changeSectionName(String uuid, String name) throws IllegalArgumentException,IOException {
+    public void changeSectionName(IndexWriter writer,String uuid, String name) throws IllegalArgumentException,IOException {
         final NoteSection section = getSectionByUUID(uuid);
-        section.changeName(name);
+        section.changeName(getName(),name,writer);
         setChanged();
         notifyObservers(new SectionRenamed(uuid, name));
     }
@@ -208,26 +212,58 @@ public class NoteBook extends Observable {
         getSectionByUUID(noteRef.getNoteSectionRef().getUUID()).addNoteAttachment(noteRef.getUUID(),path);
     }
 
+
+    /**
+     * subscribe to changes done to a note of the current notebook
+     * @param noteRef the reference of the note
+     * @param observer the new observer
+     */
     public void subscribeToNote(NoteRef noteRef, Observer observer) {
         getSectionByUUID(noteRef.getNoteSectionRef().getUUID()).subscribeToNote(noteRef.getUUID(), observer);
     }
 
 
+    /**
+     * unsubscribe to changes done to a note of the current notebook
+     * @param noteRef the reference of the note
+     * @param observer the observer to remove
+     */
     public void unSubscribeToNote(NoteRef noteRef, Observer observer) {
         getSectionByUUID(noteRef.getNoteSectionRef().getUUID()).unSubscribeToNote(noteRef.getUUID(), observer);
     }
+
+    /**
+     * remove an attachment from a note of current notebook
+     * @param attachmentRef
+     * @throws IOException
+     * @throws AttachmentNotFoundException
+     */
     public void deleteAttachment(AttachmentRef attachmentRef) throws IOException, AttachmentNotFoundException {
         getSectionByUUID(attachmentRef.getNoteRef().getNoteSectionRef().getUUID()).deleteAttachment(attachmentRef);
     }
+
+    /**
+     * save an attachment to a note of the current notebook
+     * @param attachmentRef
+     * @param path
+     * @throws IOException
+     * @throws AttachmentNotFoundException
+     */
     public void saveAttachment(AttachmentRef attachmentRef, Path path) throws IOException, AttachmentNotFoundException {
         getSectionByUUID(attachmentRef.getNoteRef().getNoteSectionRef().getUUID()).saveAttachment(attachmentRef,path);
     }
+
+
+
+    /**
+     * reindex all the notes of the current note book
+     * @param writer
+     * @throws IOException
+     */
     public void reIndexAllNotes(IndexWriter writer) throws IOException {
         synchronized (sectionsMap) {
             for (NoteSection noteSection : sectionsMap.values()) {
-                Document document  = new Document();
-                addNoteBookInformationsToDocument(noteSection,document);
-                noteSection.reIndexAllNotes(writer,document);
+                noteSection.reIndexAllNotes(getName(),writer);
             }
         }
     }

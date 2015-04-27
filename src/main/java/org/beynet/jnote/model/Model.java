@@ -2,14 +2,29 @@ package org.beynet.jnote.model;
 
 import org.apache.log4j.Logger;
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.analysis.Tokenizer;
+import org.apache.lucene.analysis.core.LowerCaseFilter;
+import org.apache.lucene.analysis.core.StopFilter;
+import org.apache.lucene.analysis.miscellaneous.ASCIIFoldingFilter;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.analysis.standard.StandardFilter;
+import org.apache.lucene.analysis.standard.StandardTokenizer;
+import org.apache.lucene.analysis.util.StopwordAnalyzerBase;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field;
-import org.apache.lucene.document.StringField;
-import org.apache.lucene.index.*;
-import org.apache.lucene.search.*;
+import org.apache.lucene.index.DirectoryReader;
+import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.queryparser.classic.ParseException;
+import org.apache.lucene.queryparser.classic.QueryParser;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.ScoreDoc;
+import org.apache.lucene.search.TopScoreDocCollector;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
+import org.apache.lucene.util.QueryBuilder;
 import org.apache.lucene.util.Version;
 import org.beynet.jnote.controler.AttachmentRef;
 import org.beynet.jnote.controler.NoteBookRef;
@@ -18,10 +33,11 @@ import org.beynet.jnote.controler.NoteSectionRef;
 import org.beynet.jnote.exceptions.AttachmentAlreadyExistException;
 import org.beynet.jnote.exceptions.AttachmentNotFoundException;
 import org.beynet.jnote.model.events.model.NewNoteBookEvent;
+import org.beynet.jnote.model.events.model.NoteBookRenamed;
 import org.beynet.jnote.model.events.model.OnExitEvent;
-import sun.security.util.Password;
 
 import java.io.IOException;
+import java.io.Reader;
 import java.nio.file.FileVisitResult;
 import java.nio.file.FileVisitor;
 import java.nio.file.Files;
@@ -36,13 +52,35 @@ public class Model extends Observable implements FileVisitor<Path> {
 
     private static Model _instance = null;
     private final IndexWriter writer;
+    private Analyzer analyzer ;
+
+
+    public class MyAnalyser extends StopwordAnalyzerBase {
+
+        public MyAnalyser() {
+            super(StandardAnalyzer.STOP_WORDS_SET);
+        }
+
+        @Override
+        protected TokenStreamComponents createComponents(String fieldName, Reader reader) {
+            final Tokenizer source = new StandardTokenizer( reader);
+
+            TokenStream tokenStream = source;
+            tokenStream = new StandardFilter( tokenStream);
+            tokenStream = new LowerCaseFilter(tokenStream);
+            tokenStream = new StopFilter(tokenStream, getStopwordSet());
+            tokenStream = new ASCIIFoldingFilter(tokenStream);
+            return new TokenStreamComponents(source, tokenStream);
+        }
+    }
 
     Model(Path rootDir) throws IOException {
         this.rootDir = rootDir;
         loadNoteBooks();
         //create lucene index
         Directory dir = FSDirectory.open(this.rootDir.resolve(".indexes").toFile());
-        Analyzer analyzer = new StandardAnalyzer();
+        analyzer = new MyAnalyser();
+
         IndexWriterConfig iwc = new IndexWriterConfig(Version.LUCENE_4_10_1, analyzer);
 
         iwc.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
@@ -156,7 +194,7 @@ public class Model extends Observable implements FileVisitor<Path> {
     }
 
     public void changeSectionName(String noteBookUUID, String sectionUUID, String name) throws IOException{
-        getNoteBookByUUID(noteBookUUID).changeSectionName(sectionUUID, name);
+        getNoteBookByUUID(noteBookUUID).changeSectionName(writer,sectionUUID, name);
     }
     public void changeNoteName(NoteSectionRef noteSectionRef, String noteUUID, String text) throws IOException{
         getNoteBookByUUID(noteSectionRef.getNoteBookRef().getUUID()).changeNoteName(noteSectionRef.getUUID(), noteUUID, text);
@@ -226,14 +264,21 @@ public class Model extends Observable implements FileVisitor<Path> {
         try (IndexReader reader = createReader()) {
             IndexSearcher searcher = new IndexSearcher(reader);
 
-            BooleanQuery booleanQuery = new BooleanQuery();
+            QueryParser parser = new QueryParser(LuceneConstants.NOTE_CONTENT,new MyAnalyser());
+            final Query parsed ;
+            try {
+                parsed = parser.parse(query);
+            } catch (ParseException e) {
+                logger.error("error in query",e);
+                throw new IOException("error in query",e);
+            }
+            /*BooleanQuery booleanQuery = new BooleanQuery();
 
             Query patternQuery = new WildcardQuery(new Term(LuceneConstants.NOTE_CONTENT, "*" + query + "*"));
-            booleanQuery.add(patternQuery, BooleanClause.Occur.MUST);
+            booleanQuery.add(patternQuery, BooleanClause.Occur.MUST);*/
 
             TopScoreDocCollector collector = TopScoreDocCollector.create(1000, true);
-
-            searcher.search(booleanQuery, collector);
+            searcher.search(parsed, collector);
             ScoreDoc[] hits = collector.topDocs().scoreDocs;
             for (int i = 0; i < hits.length; ++i) {
                 int docId = hits[i].doc;
@@ -282,13 +327,10 @@ public class Model extends Observable implements FileVisitor<Path> {
         return DirectoryReader.open(writer, true);
     }
 
-    private Path rootDir ;
-    private long depth ;
-    Map<String,NoteBook> noteBooks ;
-    private NoteBook currentNoteBook ;
-    private final static Logger logger = Logger.getLogger(Model.class);
-
-
+    /**
+     * reindex all the notes
+     * @throws IOException
+     */
     public void reIndexAllNotes() throws IOException {
         writer.deleteAll();
         synchronized (noteBooks) {
@@ -297,4 +339,18 @@ public class Model extends Observable implements FileVisitor<Path> {
             }
         }
     }
+    public void renameNoteBook(String currentUUID, String name) throws IOException {
+        NoteBook noteBook = getNoteBookByUUID(currentUUID);
+        noteBook.changeName(name);
+        setChanged();
+        notifyObservers(new NoteBookRenamed(noteBook.getUUID(), noteBook.getName()));
+    }
+
+    private Path rootDir ;
+    private long depth ;
+    Map<String,NoteBook> noteBooks ;
+    private NoteBook currentNoteBook ;
+    private final static Logger logger = Logger.getLogger(Model.class);
+
+
 }

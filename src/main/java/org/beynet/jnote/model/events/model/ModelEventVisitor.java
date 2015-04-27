@@ -7,4 +7,6 @@ public interface ModelEventVisitor {
     void visit(NewNoteBookEvent newNoteBookEvent);
 
     void visit(OnExitEvent onExitEvent);
+
+    void visit(NoteBookRenamed noteBookRenamed);
 }

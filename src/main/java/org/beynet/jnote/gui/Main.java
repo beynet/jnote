@@ -82,6 +82,7 @@ public class Main extends Application {
     private void addMenuBar(BorderPane pane) {
         final ResourceBundle labelResourceBundle = I18NHelper.getLabelResourceBundle();
         bar = new MenuBar();
+        bar.setUseSystemMenuBar(true);
         bar.prefWidthProperty().bind(currentStage.widthProperty());
         pane.setTop(bar);
 
@@ -95,6 +96,27 @@ public class Main extends Application {
                 addNewNoteBook();
             });
             file.getItems().add(addNoteBook);
+        }
+
+        // add note book menu item
+        // -----------------------
+        {
+            final MenuItem renameNoteBook = new MenuItem(labelResourceBundle.getString("renameNoteBook"));
+            renameNoteBook.setOnAction((evt) -> {
+                renameNoteBook();
+            });
+            file.getItems().add(renameNoteBook);
+        }
+
+
+        // delete current notebook
+        // ------------------------
+        {
+            final MenuItem deleteNoteBook = new MenuItem(labelResourceBundle.getString("deleteNoteBook"));
+            deleteNoteBook.setOnAction((evt) -> {
+                deleteNoteBook();
+            });
+            file.getItems().add(deleteNoteBook);
         }
 
         // reindex all notes
@@ -111,17 +133,6 @@ public class Main extends Application {
             file.getItems().add(reindexAll);
         }
 
-        // delete current notebook
-        // ------------------------
-        {
-            final MenuItem deleteNoteBook = new MenuItem(labelResourceBundle.getString("deleteNoteBook"));
-            deleteNoteBook.setOnAction((evt) -> {
-                deleteNoteBook();
-            });
-            file.getItems().add(deleteNoteBook);
-        }
-
-
         // exit menu item
         // --------------
         {
@@ -133,6 +144,8 @@ public class Main extends Application {
         }
 
 
+
+
         // add all menu
         // ------------
         bar.getMenus().add(file);
@@ -142,6 +155,11 @@ public class Main extends Application {
 
     private void addNewNoteBook() {
         NoteBookName noteBookNameDialog = new NoteBookName(currentStage, new Double(300), new Double(60));
+        noteBookNameDialog.show();
+    }
+
+    private void renameNoteBook() {
+        NoteBookName noteBookNameDialog = new NoteBookName(mainPanel.getSelectedNoteBookUUID(),mainPanel.getSelectedNoteBookName(),currentStage, new Double(300), new Double(60));
         noteBookNameDialog.show();
     }
 
