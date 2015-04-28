@@ -35,6 +35,7 @@ public class MainPanel extends VBox implements Observer,ModelEventVisitor {
 
         // this hbox will contain note books list and search menu
         GridPane centerPane = new GridPane();
+        centerPane.setPrefWidth(currentStage.getWidth());
         ColumnConstraints col1 = new ColumnConstraints();
         col1.setHalignment(HPos.LEFT);
         col1.setPercentWidth(50);
@@ -44,19 +45,7 @@ public class MainPanel extends VBox implements Observer,ModelEventVisitor {
         col2.setPercentWidth(50);
         centerPane.getColumnConstraints().add(col2);
 
-        // binding dimensions
-        notes.setPrefWidth(getWidth());
-        centerPane.setPrefWidth(getWidth());
-        widthProperty().addListener((observable, oldValue, newValue) -> {
-            notes.setPrefWidth(getWidth());
-            centerPane.setPrefWidth(getWidth());
-            centerPane.getStyleClass().add("test");
-        });
-        // binding dimensions
-        notes.setPrefHeight(getHeight());
-        heightProperty().addListener((observable, oldValue, newValue) -> {
-            notes.setPrefHeight(getHeight());
-        });
+
 
 
 
@@ -112,6 +101,15 @@ public class MainPanel extends VBox implements Observer,ModelEventVisitor {
 
         getChildren().add(centerPane);
         getChildren().add(notes);
+
+
+        // binding dimensions
+        centerPane.prefWidthProperty().bind(widthProperty());
+        notes.prefWidthProperty().bind(widthProperty());
+        notes.setPrefHeight(getHeight() - centerPane.getHeight());
+        heightProperty().addListener((observable, oldValue, newValue) -> {
+            notes.setPrefHeight(newValue.doubleValue()-centerPane.getHeight());
+        });
 
         Controller.subscribeToModel(this);
     }

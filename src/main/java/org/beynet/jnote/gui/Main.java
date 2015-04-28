@@ -68,14 +68,10 @@ public class Main extends Application {
         //pane.setCenter(tabs);
         mainPanel = new MainPanel(currentStage);
         pane.setCenter(mainPanel);
-        mainPanel.setPrefWidth(currentStage.getWidth());
-        currentStage.widthProperty().addListener((observable, oldValue, newValue) -> {
-            mainPanel.setPrefWidth(currentStage.getWidth());
-        });
-
-        mainPanel.setPrefHeight(currentStage.getHeight() - bar.getHeight());
-        currentStage.heightProperty().addListener((observable, oldValue, newValue) -> {
-            mainPanel.setPrefHeight(currentStage.getHeight() - bar.getHeight());
+        mainPanel.prefWidthProperty().bind(currentScene.widthProperty());
+        mainPanel.setPrefHeight(currentScene.getHeight() - bar.getHeight());
+        currentScene.heightProperty().addListener((observable, oldValue, newValue) -> {
+            mainPanel.setPrefHeight(currentScene.getHeight() - bar.getHeight());
         });
     }
 
@@ -83,7 +79,7 @@ public class Main extends Application {
         final ResourceBundle labelResourceBundle = I18NHelper.getLabelResourceBundle();
         bar = new MenuBar();
         bar.setUseSystemMenuBar(true);
-        bar.prefWidthProperty().bind(currentStage.widthProperty());
+        bar.prefWidthProperty().bind(currentScene.widthProperty());
         pane.setTop(bar);
 
         final Menu file = new Menu(labelResourceBundle.getString("file"));
