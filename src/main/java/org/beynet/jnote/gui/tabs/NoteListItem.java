@@ -1,8 +1,7 @@
 package org.beynet.jnote.gui.tabs;
 
 import javafx.beans.Observable;
-import javafx.beans.binding.ObjectBinding;
-import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.*;
 import javafx.util.Callback;
 import org.beynet.jnote.controler.NoteRef;
 
@@ -12,9 +11,9 @@ import org.beynet.jnote.controler.NoteRef;
 public class NoteListItem {
     public NoteListItem(NoteRef noteRef,boolean inEdition) {
         this.noteRef=noteRef;
-        this.inEdition=new SimpleObjectProperty<>();
+        this.inEdition=new SimpleBooleanProperty();
         this.inEdition.set(Boolean.valueOf(inEdition));
-        this.name=new SimpleObjectProperty<>();
+        this.name=new SimpleStringProperty();
         this.name.set(noteRef.getName());
     }
 
@@ -43,8 +42,8 @@ public class NoteListItem {
     }
 
 
-    SimpleObjectProperty<Boolean> inEdition ;
-    SimpleObjectProperty<String>  name ;
+    BooleanProperty inEdition ;
+    StringProperty name ;
     NoteRef noteRef;
 
 }
