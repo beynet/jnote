@@ -9,7 +9,7 @@ import javafx.scene.control.TabPane;
  */
 public class AddNoteTab extends Tab {
     public AddNoteTab() {
-        setGraphic(new Label("+"));
+        setGraphic(new Label(" + "));
         setOnSelectionChanged(event -> {
             if (isSelected() == true && skipNextSelectionChange==true) {
                 final TabPane tabPane = getTabPane();
@@ -17,6 +17,7 @@ public class AddNoteTab extends Tab {
             }
             skipNextSelectionChange=false;
         });
+        setClosable(false);
     }
 
     /**
