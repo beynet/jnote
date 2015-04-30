@@ -62,8 +62,8 @@ public class Model extends Observable implements FileVisitor<Path> {
         }
 
         @Override
-        protected TokenStreamComponents createComponents(String fieldName, Reader reader) {
-            final Tokenizer source = new StandardTokenizer( reader);
+        protected TokenStreamComponents createComponents(String fieldName) {
+            final Tokenizer source = new StandardTokenizer();
 
             TokenStream tokenStream = source;
             tokenStream = new StandardFilter( tokenStream);
@@ -78,10 +78,10 @@ public class Model extends Observable implements FileVisitor<Path> {
         this.rootDir = rootDir;
         loadNoteBooks();
         //create lucene index
-        Directory dir = FSDirectory.open(this.rootDir.resolve(".indexes").toFile());
+        Directory dir = FSDirectory.open(this.rootDir.resolve(".indexes"));
         analyzer = new MyAnalyser();
 
-        IndexWriterConfig iwc = new IndexWriterConfig(Version.LUCENE_4_10_2, analyzer);
+        IndexWriterConfig iwc = new IndexWriterConfig(analyzer);
 
         iwc.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
         this.writer = new IndexWriter(dir, iwc);
@@ -277,7 +277,7 @@ public class Model extends Observable implements FileVisitor<Path> {
             Query patternQuery = new WildcardQuery(new Term(LuceneConstants.NOTE_CONTENT, "*" + query + "*"));
             booleanQuery.add(patternQuery, BooleanClause.Occur.MUST);*/
 
-            TopScoreDocCollector collector = TopScoreDocCollector.create(1000, true);
+            TopScoreDocCollector collector = TopScoreDocCollector.create(1000);
             searcher.search(parsed, collector);
             ScoreDoc[] hits = collector.topDocs().scoreDocs;
             for (int i = 0; i < hits.length; ++i) {
