@@ -109,6 +109,10 @@ public class Controller {
     }
 
     public static void renameNoteBook(String currentUUID, String name) throws IOException {
-        Model.getInstance().renameNoteBook(currentUUID,name);
+        Model.getInstance().renameNoteBook(currentUUID, name);
+    }
+
+    public static void deleteSection(NoteSectionRef ref) throws IOException {
+        Model.getInstance().deleteSection(ref);
     }
 }

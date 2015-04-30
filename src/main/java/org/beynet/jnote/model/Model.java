@@ -55,6 +55,8 @@ public class Model extends Observable implements FileVisitor<Path> {
     private Analyzer analyzer ;
 
 
+
+
     public class MyAnalyser extends StopwordAnalyzerBase {
 
         public MyAnalyser() {
@@ -85,6 +87,10 @@ public class Model extends Observable implements FileVisitor<Path> {
 
         iwc.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
         this.writer = new IndexWriter(dir, iwc);
+    }
+
+    public void deleteSection(NoteSectionRef ref) throws IOException {
+        getNoteBookByUUID(ref.getNoteBookRef().getUUID()).deleteSection(ref,writer);
     }
 
     public static Model createInstance(Path rootDir) throws IOException {
@@ -229,7 +235,7 @@ public class Model extends Observable implements FileVisitor<Path> {
 
     public void delNoteBook(String noteBookUUID) throws IOException {
         NoteBook noteBookByUUID = getNoteBookByUUID(noteBookUUID);
-        noteBookByUUID.delete();
+        noteBookByUUID.delete(writer);
     }
 
 

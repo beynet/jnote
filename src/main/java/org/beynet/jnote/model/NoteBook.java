@@ -4,6 +4,7 @@ import org.apache.log4j.Logger;
 import org.apache.lucene.index.IndexWriter;
 import org.beynet.jnote.controler.AttachmentRef;
 import org.beynet.jnote.controler.NoteRef;
+import org.beynet.jnote.controler.NoteSectionRef;
 import org.beynet.jnote.exceptions.AttachmentAlreadyExistException;
 import org.beynet.jnote.exceptions.AttachmentNotFoundException;
 import org.beynet.jnote.model.events.notebook.NoteSectionAdded;
@@ -189,10 +190,10 @@ public class NoteBook extends Observable {
         NoteSection section = getSectionByUUID(noteRef.getNoteSectionRef().getUUID());
         section.delNote(noteRef.getUUID());
     }
-    public void delete() throws IOException {
+    public void delete(IndexWriter writer) throws IOException {
         synchronized (sectionsMap) {
             for (NoteSection section : sectionsMap.values()) {
-                section.delete();
+                section.delete(writer);
                 setChanged();
                 notifyObservers(new NoteSectionDeleted(section.getUUID(),true));
             }
@@ -266,6 +267,12 @@ public class NoteBook extends Observable {
                 noteSection.reIndexAllNotes(getName(),writer);
             }
         }
+    }
+    public void deleteSection(NoteSectionRef ref,IndexWriter writer) throws IOException {
+        getSectionByUUID(ref.getUUID()).delete(writer);
+        sectionsMap.remove(ref.getUUID());
+        setChanged();
+        notifyObservers(new NoteSectionDeleted(ref.getUUID(), true));
     }
 
     private Path path;

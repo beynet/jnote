@@ -16,7 +16,9 @@ import org.beynet.jnote.controler.NoteRef;
 import org.beynet.jnote.controler.NoteSectionRef;
 import org.beynet.jnote.exceptions.AttachmentAlreadyExistException;
 import org.beynet.jnote.gui.dialogs.Alert;
+import org.beynet.jnote.gui.dialogs.Confirm;
 import org.beynet.jnote.model.events.section.*;
+import org.beynet.jnote.utils.I18NHelper;
 
 import java.io.File;
 import java.io.IOException;
@@ -39,6 +41,18 @@ public class NoteSection extends Tab implements Observer,SectionEventVisitor {
                 fieldTitle.setText(labeltitle.getText());
                 setGraphic(fieldTitle);
             }
+        });
+        setOnCloseRequest(event -> {
+            Confirm confirmDeleteSection = new Confirm(currentStage, I18NHelper.getLabelResourceBundle().getString("confirmDeleteSection"));
+            confirmDeleteSection.showAndWait();
+            if (confirmDeleteSection.isConfirmed()) {
+                try {
+                    Controller.deleteSection(noteSectionRef);
+                } catch (IOException e) {
+                    new Alert(currentStage,"unable to delete section "+e.getMessage()).show();
+                }
+            }
+            event.consume();
         });
 
         fieldTitle.setOnAction((evt) -> {

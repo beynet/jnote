@@ -454,8 +454,11 @@ public class NoteSection extends Observable {
         notifyObservers(new NoteDeleted(note.getUUID()));
     }
 
-    public void delete() throws IOException {
+    public synchronized void delete(IndexWriter writer) throws IOException {
         logger.debug("deleting section " + getName());
+        for (NoteRef note : notes) {
+            unIndexNote(note.getUUID(),writer);
+        }
         Files.delete(getPath());
     }
 
@@ -473,10 +476,18 @@ public class NoteSection extends Observable {
         saveNote(note);
         setChanged();
         notifyObservers(new NoteContentChanged(getUUID(), noteUUID, content));
-        indexNote(noteBookName,note,writer);
+        indexNote(noteBookName, note, writer);
+    }
+
+    private void unIndexNote(String uuid,IndexWriter writer) throws IOException {
+        Term uuidTerm = new Term(LuceneConstants.NOTE_UUID,uuid);
+        Query query = new TermQuery(uuidTerm);
+        writer.deleteDocuments(query);
     }
 
     private void indexNote(String noteBookName,Note note,IndexWriter writer) throws IOException {
+
+        unIndexNote(note.getUUID(),writer);
 
         StringField sectionUUID = new StringField(LuceneConstants.SECTION_UUID,getUUID(), Field.Store.YES);
         TextField  sectionName = new TextField(LuceneConstants.SECTION_NAME,getName(), Field.Store.YES);
@@ -487,9 +498,7 @@ public class NoteSection extends Observable {
         document.add(sectionName);
         document.add(noteBookNameField);
 
-        Term uuidTerm = new Term(LuceneConstants.NOTE_UUID,note.getUUID());
-        Query query = new TermQuery(uuidTerm);
-        writer.deleteDocuments(query);
+
         String noteContent = note.getContent();
         if (noteContent==null) noteContent="";
         StringBuilder content = new StringBuilder(noteContent);
