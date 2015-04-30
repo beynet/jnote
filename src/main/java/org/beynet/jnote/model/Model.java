@@ -81,7 +81,7 @@ public class Model extends Observable implements FileVisitor<Path> {
         Directory dir = FSDirectory.open(this.rootDir.resolve(".indexes").toFile());
         analyzer = new MyAnalyser();
 
-        IndexWriterConfig iwc = new IndexWriterConfig(Version.LUCENE_4_10_1, analyzer);
+        IndexWriterConfig iwc = new IndexWriterConfig(Version.LUCENE_4_10_2, analyzer);
 
         iwc.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
         this.writer = new IndexWriter(dir, iwc);
