@@ -505,9 +505,9 @@ public class NoteSection extends Observable {
         content.append(" ");
         content.append(note.getName());
         content.append(" ");
-        content.append(document.getField(LuceneConstants.SECTION_NAME));
+        content.append(document.getField(LuceneConstants.SECTION_NAME).stringValue());
         content.append(" ");
-        content.append(document.getField(LuceneConstants.NOTE_BOOK_NAME));
+        content.append(document.getField(LuceneConstants.NOTE_BOOK_NAME).stringValue());
 
 
         StringField noteUUID = new StringField(LuceneConstants.NOTE_UUID,note.getUUID(), Field.Store.YES);
