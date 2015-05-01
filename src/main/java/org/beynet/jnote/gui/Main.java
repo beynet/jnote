@@ -171,7 +171,7 @@ public class Main extends Application {
     private void exitApplication() {
         logger.debug("on exit");
         Controller.onExit();
-        System.exit(0);
+        Platform.exit();
     }
 
     private Stage currentStage ;
