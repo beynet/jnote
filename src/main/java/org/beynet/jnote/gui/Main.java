@@ -17,11 +17,13 @@ import org.beynet.jnote.gui.dialogs.Alert;
 import org.beynet.jnote.gui.dialogs.NoteBookName;
 import org.beynet.jnote.gui.tabs.MainPanel;
 import org.beynet.jnote.model.Model;
+import org.beynet.jnote.utils.Configuration;
 import org.beynet.jnote.utils.I18NHelper;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Optional;
 import java.util.ResourceBundle;
 
 public class Main extends Application {
@@ -30,7 +32,15 @@ public class Main extends Application {
         BasicConfigurator.configure();
         Logger.getRootLogger().setLevel(Level.DEBUG);
         Path userHome = Paths.get((String) System.getProperty("user.home"));
-        Model.createInstance(userHome.resolve(".jnote"));
+        Configuration.initConfiguration(userHome.resolve(".jnoterc"));
+        Configuration config = Configuration.getInstance();
+        Optional<Path> storageDirectoryPath = config.getStorageDirectoryPath();
+        if (storageDirectoryPath.isPresent()==false) {
+            config.setStorageDirectoryPath(userHome.resolve(".jnote"));
+            storageDirectoryPath=config.getStorageDirectoryPath();
+        }
+        storageDirectoryPath.orElseThrow(RuntimeException::new);
+        Model.createInstance(storageDirectoryPath.get());
         launch(args);
     }
 
