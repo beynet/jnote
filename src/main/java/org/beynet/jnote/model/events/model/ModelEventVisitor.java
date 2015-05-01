@@ -9,4 +9,6 @@ public interface ModelEventVisitor {
     void visit(OnExitEvent onExitEvent);
 
     void visit(NoteBookRenamed noteBookRenamed);
+
+    void visit(NoteBookDeleted noteBookDeleted);
 }

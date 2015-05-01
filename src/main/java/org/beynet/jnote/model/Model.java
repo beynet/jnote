@@ -21,6 +21,7 @@ import org.beynet.jnote.controler.NoteSectionRef;
 import org.beynet.jnote.exceptions.AttachmentAlreadyExistException;
 import org.beynet.jnote.exceptions.AttachmentNotFoundException;
 import org.beynet.jnote.model.events.model.NewNoteBookEvent;
+import org.beynet.jnote.model.events.model.NoteBookDeleted;
 import org.beynet.jnote.model.events.model.NoteBookRenamed;
 import org.beynet.jnote.model.events.model.OnExitEvent;
 
@@ -202,6 +203,8 @@ public class Model extends Observable implements FileVisitor<Path> {
     public void delNoteBook(String noteBookUUID) throws IOException {
         NoteBook noteBookByUUID = getNoteBookByUUID(noteBookUUID);
         noteBookByUUID.delete(writer);
+        setChanged();
+        notifyObservers(new NoteBookDeleted(noteBookByUUID.getUUID()));
     }
 
 

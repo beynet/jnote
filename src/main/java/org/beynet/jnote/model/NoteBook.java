@@ -198,6 +198,7 @@ public class NoteBook extends Observable {
                 notifyObservers(new NoteSectionDeleted(section.getUUID(),true));
             }
             sectionsMap.clear();
+            Files.delete(path);
         }
         //Files.delete(path);
         // TODO notify notebook deleted

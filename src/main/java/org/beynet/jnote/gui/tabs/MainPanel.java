@@ -131,6 +131,16 @@ public class MainPanel extends VBox implements Observer,ModelEventVisitor {
     }
 
     @Override
+    public void visit(NoteBookDeleted noteBookDeleted) {
+        for (NoteBookRef noteBookRef : n.getItems()) {
+            if (noteBookRef.getUUID().equals(noteBookDeleted.getUUID())) {
+                n.getItems().remove(noteBookRef);
+                break;
+            }
+        }
+    }
+
+    @Override
     public void visit(OnExitEvent onExitEvent) {
         notes.onExit();
     }
