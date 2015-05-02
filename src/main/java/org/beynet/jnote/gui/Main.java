@@ -31,6 +31,7 @@ public class Main extends Application {
     public static void main(String[] args) throws IOException {
         BasicConfigurator.configure();
         Logger.getRootLogger().setLevel(Level.DEBUG);
+        logger.info("version " + Configuration.getVersion());
         Path userHome = Paths.get((String) System.getProperty("user.home"));
         Configuration.initConfiguration(userHome.resolve(".jnoterc"));
         Configuration config = Configuration.getInstance();
@@ -137,6 +138,23 @@ public class Main extends Application {
                 }
             });
             file.getItems().add(reindexAll);
+        }
+
+        // about menu item
+        // --------------
+        {
+            String v;
+            try {
+                v = Configuration.getVersion();
+            } catch (IOException e) {
+                v="unknown";
+            }
+            final String version = v;
+            final MenuItem about = new MenuItem(labelResourceBundle.getString("about"));
+            about.setOnAction((evt) -> {
+                new Alert(currentStage,"jnote version="+version).show();
+            });
+            file.getItems().add(about);
         }
 
         // exit menu item

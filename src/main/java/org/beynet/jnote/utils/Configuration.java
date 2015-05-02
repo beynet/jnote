@@ -2,9 +2,7 @@ package org.beynet.jnote.utils;
 
 import org.apache.log4j.Logger;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
@@ -66,6 +64,13 @@ public class Configuration {
             properties.store(os,null);
         } catch (IOException e) {
             logger.error("unable to save property file");
+        }
+    }
+
+
+    public static String getVersion() throws IOException {
+        try(BufferedReader reader = new BufferedReader(new InputStreamReader(Configuration.class.getResourceAsStream("/version.txt"),"UTF-8")) ) {
+            return reader.readLine();
         }
     }
 
