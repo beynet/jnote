@@ -134,7 +134,8 @@ public class Main extends Application {
                 try {
                     Controller.reIndexAllNotes();
                 } catch (IOException e) {
-                    Platform.runLater(()->new Alert(currentStage,"unable to index"+e.getMessage()).show());
+                    logger.error("error indexing",e);
+                    Platform.runLater(()->new Alert(currentStage,"unable to index :"+e.getMessage()).show());
                 }
             });
             file.getItems().add(reindexAll);
