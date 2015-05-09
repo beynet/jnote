@@ -49,7 +49,7 @@ public class NoteSection extends Tab implements Observer,SectionEventVisitor {
                 try {
                     Controller.deleteSection(noteSectionRef);
                 } catch (IOException e) {
-                    new Alert(currentStage,"unable to delete section "+e.getMessage()).show();
+                    new Alert(currentStage,I18NHelper.getLabelResourceBundle().getString("errorDeletingSection")+e.getMessage(),e).show();
                 }
             }
             event.consume();
@@ -62,7 +62,7 @@ public class NoteSection extends Tab implements Observer,SectionEventVisitor {
                 Controller.changeSectionName(noteBookRef, UUID, fieldTitle.getText());
             } catch (IOException e) {
                 logger.error("unable to change section name",e);
-                new org.beynet.jnote.gui.dialogs.Alert(currentStage,"unable to modify section name "+e.getMessage()).show();
+                new Alert(currentStage,I18NHelper.getLabelResourceBundle().getString("errorModyfyingSectionName")+e.getMessage(),e).show();
             }
         });
         HBox hbox = new HBox();
@@ -165,9 +165,9 @@ public class NoteSection extends Tab implements Observer,SectionEventVisitor {
                                 try {
                                     Controller.addAttachment(noteRef,newFile.toPath());
                                 } catch (IOException e) {
-                                    new Alert(currentStage,"unable to attach file "+e.getMessage()).show();
+                                    new Alert(currentStage,I18NHelper.getLabelResourceBundle().getString("errorAttachingFile")+e.getMessage(),e).show();
                                 } catch (AttachmentAlreadyExistException e) {
-                                    new Alert(currentStage,"a file with the same name is already attached to current note").show();
+                                    new Alert(currentStage,I18NHelper.getLabelResourceBundle().getString("errorFileWithSameName")).show();
                                 }
                             }
                             return null;

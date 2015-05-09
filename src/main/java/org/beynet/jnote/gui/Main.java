@@ -135,7 +135,7 @@ public class Main extends Application {
                     Controller.reIndexAllNotes();
                 } catch (IOException e) {
                     logger.error("error indexing",e);
-                    Platform.runLater(()->new Alert(currentStage,"unable to index :"+e.getMessage()).show());
+                    Platform.runLater(()->new Alert(currentStage,"unable to index :"+e.getMessage(),e).show());
                 }
             });
             file.getItems().add(reindexAll);
@@ -192,8 +192,9 @@ public class Main extends Application {
         try {
             Controller.delNoteBook(mainPanel.getSelectedNoteBookUUID());
         } catch (IOException e) {
-            logger.error("unable to delete note book",e);
-            new Alert(currentStage,"unable to delete note book "+e.getMessage()).show();
+            String message = I18NHelper.getLabelResourceBundle().getString("errorDeletingNoteBook")+" : "+e.getMessage();
+            logger.error(message,e);
+            new Alert(currentStage,message,e).show();
         }
     }
 

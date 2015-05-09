@@ -56,7 +56,7 @@ public class NoteList extends ListView<NoteListItem> {
             try {
                 Controller.addNote(noteSectionRef);
             } catch (IOException e) {
-                new Alert(currentStage, "unable to create note :" + e.getMessage()).show();
+                new Alert(currentStage, I18NHelper.getLabelResourceBundle().getString("errorCreatingNote") + e.getMessage(),e).show();
             }
         });
 
@@ -66,7 +66,7 @@ public class NoteList extends ListView<NoteListItem> {
                 try {
                     Controller.delNote(item.getNoteRef());
                 } catch (IOException e) {
-                    new Alert(currentStage,"unable to delete note "+e.getMessage());
+                    new Alert(currentStage,I18NHelper.getLabelResourceBundle().getString("errorDeletingNote")+e.getMessage(),e);
                 }
             }
         });

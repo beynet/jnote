@@ -90,7 +90,7 @@ public class MainPanel extends VBox implements Observer,ModelEventVisitor {
                         );
                     }
                 } catch (IOException e) {
-                    Platform.runLater(() -> new Alert(currentStage, "error running search").show());
+                    Platform.runLater(() -> new Alert(currentStage, I18NHelper.getLabelResourceBundle().getString("errorRunningSearch"),e).show());
                 }
             }
         });

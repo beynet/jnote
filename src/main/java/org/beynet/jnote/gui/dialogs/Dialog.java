@@ -14,11 +14,15 @@ import org.beynet.jnote.gui.Styles;
  */
 public abstract class Dialog  extends Stage {
     public Dialog(Stage parent,Double with,Double height) {
+        init(parent,with,height);
+    }
+
+    protected void init(Stage parent,Double with,Double height) {
         this.parent = parent;
         root = new Group();
 
         if (with!=null && height!=null) {
-            scene = new Scene(root, with, height);
+            scene = new Scene(root, with.doubleValue(), height.doubleValue());
         }else {
             scene = new Scene(root);
         }

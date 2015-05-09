@@ -10,6 +10,7 @@ import javafx.stage.Stage;
 import org.apache.log4j.Logger;
 import org.beynet.jnote.controler.Controller;
 import org.beynet.jnote.controler.AttachmentRef;
+import org.beynet.jnote.utils.I18NHelper;
 
 import java.io.File;
 
@@ -43,9 +44,9 @@ public class FileManagement extends DialogModal {
                 protected Void call() throws Exception {
                     try {
                         Controller.saveAttachment(attachmentRef,result.toPath());
-                        Platform.runLater(() -> new Alert(parent, "file correctly downloaded").show());
+                        Platform.runLater(() -> new Alert(parent, I18NHelper.getLabelResourceBundle().getString("fileDownloaded")).show());
                     } catch(Exception e) {
-                        Platform.runLater(() -> new Alert(parent, "unable to download attachment " + e.getMessage()).show());
+                        Platform.runLater(() -> new Alert(parent, I18NHelper.getLabelResourceBundle().getString("errorDownloadingFile") + e.getMessage(),e).show());
                     }
                     return null;
                 }

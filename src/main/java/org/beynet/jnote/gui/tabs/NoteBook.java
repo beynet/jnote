@@ -16,6 +16,7 @@ import org.beynet.jnote.model.events.section.NoteAdded;
 import org.beynet.jnote.model.events.section.NoteContentChanged;
 import org.beynet.jnote.model.events.section.NoteDeleted;
 import org.beynet.jnote.model.events.section.NoteRenamed;
+import org.beynet.jnote.utils.I18NHelper;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -77,7 +78,7 @@ public class NoteBook extends TabPane implements Observer ,NoteBookEventVisitor 
             try {
                 Controller.createNewSection(currentNoteBook);
             } catch (IOException e) {
-                new Alert(currentStage,"unable to create new section "+e.getMessage()).show();
+                new Alert(currentStage, I18NHelper.getLabelResourceBundle().getString("errorCreatingNewSection")+e.getMessage(),e).show();
             }
         }
     }

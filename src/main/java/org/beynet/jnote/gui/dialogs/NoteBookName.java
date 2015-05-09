@@ -52,7 +52,7 @@ public class NoteBookName extends DialogModal{
                             Controller.renameNoteBook(currentUUID,name);
                         }
                     } catch (IOException e) {
-                        new Alert(parent, "unable to create note book " + e.getMessage()).show();
+                        new Alert(parent, I18NHelper.getLabelResourceBundle().getString("errorCreatingNoteBook") + e.getMessage(),e).show();
                     }
                 }
             });
