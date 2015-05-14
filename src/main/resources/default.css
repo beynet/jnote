@@ -6,10 +6,10 @@
 .text-field {
     -fx-border-style: solid;
     -fx-border-width:1px;
-
 }
 .text-field:focused{
-
+    -fx-border-style: solid;
+    -fx-border-width:1px;
 }
 
 .searchresults {
@@ -19,4 +19,18 @@
 }
 .searchresults:focused {
     -fx-background-color: red;
+}
+
+.content .list-cell{
+    -fx-background-color: transparent;
+}
+
+
+.content .text-field  {
+    -fx-spacing: 0;
+    -fx-padding: 0;
+    -fx-border-style: none;
+    -fx-border-width: 0px;
+    -fx-background-color: -fx-control-inner-background;
+    -fx-background-insets: 0;
 }
