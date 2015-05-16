@@ -8,14 +8,9 @@ import javafx.stage.Stage;
 import org.beynet.jnote.controler.Controller;
 import org.beynet.jnote.controler.NoteBookRef;
 import org.beynet.jnote.controler.NoteRef;
+import org.beynet.jnote.gui.Styles;
 import org.beynet.jnote.gui.dialogs.Alert;
-import org.beynet.jnote.model.events.model.NewNoteBookEvent;
-import org.beynet.jnote.model.events.model.OnExitEvent;
 import org.beynet.jnote.model.events.notebook.*;
-import org.beynet.jnote.model.events.section.NoteAdded;
-import org.beynet.jnote.model.events.section.NoteContentChanged;
-import org.beynet.jnote.model.events.section.NoteDeleted;
-import org.beynet.jnote.model.events.section.NoteRenamed;
 import org.beynet.jnote.utils.I18NHelper;
 
 import java.io.IOException;
@@ -34,7 +29,7 @@ public class NoteBook extends TabPane implements Observer ,NoteBookEventVisitor 
         setOnMouseClicked(event -> {
             checkClick(event);
         });
-        getStyleClass().add("tabpane");
+        getStyleClass().add(Styles.TAB_PANE);
         getTabs().add(addNoteTab);
         currentNoteBook = null;
     }

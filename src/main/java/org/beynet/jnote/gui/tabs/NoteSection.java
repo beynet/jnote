@@ -15,6 +15,7 @@ import org.beynet.jnote.controler.NoteBookRef;
 import org.beynet.jnote.controler.NoteRef;
 import org.beynet.jnote.controler.NoteSectionRef;
 import org.beynet.jnote.exceptions.AttachmentAlreadyExistException;
+import org.beynet.jnote.gui.Styles;
 import org.beynet.jnote.gui.dialogs.Alert;
 import org.beynet.jnote.gui.dialogs.Confirm;
 import org.beynet.jnote.model.events.section.*;
@@ -36,6 +37,7 @@ public class NoteSection extends Tab implements Observer,SectionEventVisitor {
         labeltitle = new Label(name);
         fieldTitle = new TextField();
         setGraphic(labeltitle);
+        getStyleClass().add(Styles.TAB);
         labeltitle.setOnMouseClicked((evt) -> {
             if (evt.getClickCount() >= 2) {
                 fieldTitle.setText(labeltitle.getText());
@@ -66,7 +68,7 @@ public class NoteSection extends Tab implements Observer,SectionEventVisitor {
             }
         });
         HBox hbox = new HBox();
-
+        hbox.getStyleClass().add(Styles.TAB_CONTENT);
 
         noteList = new NoteList(this.currentStage,noteSectionRef);
         content = new JNoteEditor(currentStage);
@@ -79,6 +81,9 @@ public class NoteSection extends Tab implements Observer,SectionEventVisitor {
             noteList.setPrefWidth(newValue1.doubleValue()*15/100);
             content.setPrefWidth(newValue1.doubleValue() - noteList.getPrefWidth());
         });
+
+        content.prefHeightProperty().bind(hbox.heightProperty().subtract(noteList.heightProperty()));
+
         setContent(hbox);
 
         // enable html content

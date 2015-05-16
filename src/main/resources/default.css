@@ -3,6 +3,10 @@
     -fx-faint-focus-color:transparent;
 }
 
+.editor{
+
+}
+
 .text-field {
     -fx-border-style: solid;
     -fx-border-width:1px;
