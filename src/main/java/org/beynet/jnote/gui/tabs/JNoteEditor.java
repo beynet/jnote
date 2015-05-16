@@ -6,11 +6,15 @@ import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.ToolBar;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.Priority;
 import javafx.scene.web.HTMLEditor;
+import javafx.scene.web.WebView;
 import javafx.stage.Stage;
 import org.beynet.jnote.controler.Controller;
 import org.beynet.jnote.controler.AttachmentRef;
 import org.beynet.jnote.controler.NoteRef;
+import org.beynet.jnote.gui.Styles;
 import org.beynet.jnote.gui.dialogs.FileManagement;
 import org.beynet.jnote.model.events.note.AttachmentAddedToNote;
 import org.beynet.jnote.model.events.note.AttachmentRemovedFromNote;
@@ -27,6 +31,7 @@ import java.util.Observer;
 public class JNoteEditor extends HTMLEditor implements Observer,NoteEventVisitor{
     public JNoteEditor(Stage currentStage) {
         super();
+        getStyleClass().add(Styles.EDITOR);
         Node node = lookup(".top-toolbar");
         if (node instanceof ToolBar) {
             ToolBar bar = (ToolBar) node;
@@ -44,6 +49,9 @@ public class JNoteEditor extends HTMLEditor implements Observer,NoteEventVisitor
                 }
             });
         }
+        WebView webview = (WebView) lookup("WebView");
+        GridPane.setHgrow(webview, Priority.ALWAYS);
+        GridPane.setVgrow(webview, Priority.ALWAYS);
     }
 
     @Override
