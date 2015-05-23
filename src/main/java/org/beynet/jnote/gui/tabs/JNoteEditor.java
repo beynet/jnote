@@ -25,10 +25,12 @@ import org.beynet.jnote.model.events.note.NoteEvent;
 import org.beynet.jnote.model.events.note.NoteEventVisitor;
 import org.beynet.jnote.utils.I18NHelper;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Observable;
 import java.util.Observer;
@@ -69,12 +71,26 @@ public class JNoteEditor extends HTMLEditor implements Observer,NoteEventVisitor
         GridPane.setHgrow(webview, Priority.ALWAYS);
         GridPane.setVgrow(webview, Priority.ALWAYS);
         try {
-            js = new String(Files.readAllBytes(Paths.get(JNoteEditor.class.getResource("/editor.js").toURI())),"UTF-8");
+            js = readJs();
 
-        } catch (IOException |URISyntaxException e) {
-           throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
+    }
 
+    private String readJs() throws IOException {
+        ByteArrayOutputStream bo = new ByteArrayOutputStream();
+        byte[] buffer = new byte[1014];
+        try (InputStream jsStream = JNoteEditor.class.getResourceAsStream("/editor.js")) {
+            int read = 1;
+            while(read>=0) {
+                read=jsStream.read(buffer);
+                if (read>0){
+                    bo.write(buffer,0,read);
+                }
+            }
+        }
+        return new String(bo.toByteArray(),"UTF-8");
     }
 
     private void insertTable() {
