@@ -6,6 +6,9 @@
 .editor{
 
 }
+.editor:hover{
+    -fx-background-color: transparent;
+}
 
 .text-field {
     -fx-border-style: solid;
