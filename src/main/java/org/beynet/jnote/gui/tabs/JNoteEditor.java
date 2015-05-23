@@ -7,6 +7,9 @@ import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.ToolBar;
+import javafx.scene.control.Tooltip;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.web.HTMLEditor;
@@ -61,10 +64,23 @@ public class JNoteEditor extends HTMLEditor implements Observer,NoteEventVisitor
             });
 
             Button insertTable = new Button("table");
+            insertTable.setTooltip(new Tooltip(I18NHelper.getLabelResourceBundle().getString("createATableTooltip")));
             insertTable.setOnAction(event -> {
                 insertTable();
             });
             bar.getItems().add(insertTable);
+
+            Button copyContent = new Button("A");
+            copyContent.setTooltip(new Tooltip(I18NHelper.getLabelResourceBundle().getString("copyAllContent")));
+            copyContent.setOnAction(event -> {
+                final Clipboard clipboard = Clipboard.getSystemClipboard();
+                final ClipboardContent content = new ClipboardContent();
+                content.putHtml(getHtmlText());
+                clipboard.setContent(content);
+            });
+            bar.getItems().add(copyContent);
+
+
 
         }
         WebView webview = (WebView) lookup("WebView");
