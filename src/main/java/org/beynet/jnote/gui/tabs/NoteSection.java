@@ -31,19 +31,34 @@ import java.util.Observer;
  */
 public class NoteSection extends Tab implements Observer,SectionEventVisitor {
 
+    private Boolean justSelected=Boolean.TRUE;
+
     public NoteSection(Stage currentStage,NoteBookRef noteBookRef,String name,String UUID) {
         this.currentStage = currentStage;
         this.noteSectionRef = new NoteSectionRef(noteBookRef,UUID,name);
         labeltitle = new Label(name);
         fieldTitle = new TextField();
+        fieldTitle.focusedProperty().addListener((observable, oldValue, newValue) -> {
+            if (Boolean.FALSE.equals(newValue)) {
+                setGraphic(labeltitle);
+            }
+        });
         setGraphic(labeltitle);
         getStyleClass().add(Styles.TAB);
         labeltitle.setOnMouseClicked((evt) -> {
-            if (evt.getClickCount() >= 2) {
-                fieldTitle.setText(labeltitle.getText());
-                setGraphic(fieldTitle);
+            if (evt.getClickCount() >= 1) {
+                if (Boolean.FALSE.equals(justSelected)) {
+                    fieldTitle.setText(labeltitle.getText());
+                    setGraphic(fieldTitle);
+                    fieldTitle.requestFocus();
+                }
+                else {
+                    justSelected=Boolean.FALSE;
+                }
             }
         });
+
+
         setOnCloseRequest(event -> {
             Confirm confirmDeleteSection = new Confirm(currentStage, I18NHelper.getLabelResourceBundle().getString("confirmDeleteSection"));
             confirmDeleteSection.showAndWait();
@@ -123,10 +138,12 @@ public class NoteSection extends Tab implements Observer,SectionEventVisitor {
         //saving content when tab change
         setOnSelectionChanged((evt) -> {
             if (isSelected() == false) {
+                setGraphic(labeltitle);
                 Controller.unSubscribeToNoteSection(noteSectionRef, this);
                 save();
                 while (noteList.getList().size() > 0) noteList.getList().remove(0);
             } else {
+                justSelected = Boolean.TRUE;
                 try {
                     Controller.subscribeToNoteSection(noteSectionRef, this);
                 } catch (IllegalArgumentException e) {
