@@ -1,20 +1,22 @@
 package org.beynet.jnote.gui.tabs;
 
+import com.sun.javafx.scene.control.skin.ContextMenuContent;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
-import javafx.scene.control.Button;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.ToolBar;
-import javafx.scene.control.Tooltip;
+import javafx.scene.Parent;
+import javafx.scene.control.*;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
 import javafx.scene.web.HTMLEditor;
 import javafx.scene.web.WebView;
+import javafx.stage.PopupWindow;
 import javafx.stage.Stage;
+import javafx.stage.Window;
 import org.apache.log4j.Logger;
 import org.beynet.jnote.controler.Controller;
 import org.beynet.jnote.controler.AttachmentRef;
@@ -31,12 +33,7 @@ import org.beynet.jnote.utils.I18NHelper;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Observable;
-import java.util.Observer;
+import java.util.*;
 
 /**
  * Created by beynet on 21/04/2015.
@@ -44,6 +41,11 @@ import java.util.Observer;
 public class JNoteEditor extends HTMLEditor implements Observer,NoteEventVisitor{
     public JNoteEditor(Stage currentStage) {
         super();
+
+        WebView webview = (WebView) lookup("WebView");
+        GridPane.setHgrow(webview, Priority.ALWAYS);
+        GridPane.setVgrow(webview, Priority.ALWAYS);
+
         this.currentStage=currentStage;
         getStyleClass().add(Styles.EDITOR);
         Node node = lookup(".top-toolbar");
@@ -66,7 +68,22 @@ public class JNoteEditor extends HTMLEditor implements Observer,NoteEventVisitor
             Button insertTable = new Button("table");
             insertTable.setTooltip(new Tooltip(I18NHelper.getLabelResourceBundle().getString("createATableTooltip")));
             insertTable.setOnAction(event -> {
-                insertTable();
+                if (Boolean.TRUE.equals(webview.getEngine().executeScript(js+"isCursorInATable()"))) {
+                    List<String> choice = Arrays.asList(I18NHelper.getLabelResourceBundle().getString("increase"),I18NHelper.getLabelResourceBundle().getString("reduce"));
+                    ChoiceDialog<String> increaseOrReduceTableDimension = new ChoiceDialog<String>(choice.get(0),choice);
+                    Optional<String> result = increaseOrReduceTableDimension.showAndWait();
+                    result.ifPresent((res) -> {
+                        if (res.equals(I18NHelper.getLabelResourceBundle().getString("increase"))) {
+                            addOrRemoveColOrRow(webview, Boolean.TRUE);
+                        }
+                        else {
+                            addOrRemoveColOrRow(webview, Boolean.FALSE);
+                        }
+                    });
+                }
+                else {
+                    insertTable();
+                }
             });
             bar.getItems().add(insertTable);
 
@@ -83,16 +100,105 @@ public class JNoteEditor extends HTMLEditor implements Observer,NoteEventVisitor
 
 
         }
-        WebView webview = (WebView) lookup("WebView");
-        GridPane.setHgrow(webview, Priority.ALWAYS);
-        GridPane.setVgrow(webview, Priority.ALWAYS);
+
         try {
             js = readJs();
 
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+
+        // adding new item:
+        addLineToTable = new MenuItem("add ligne to table");
+        addLineToTable.setOnAction(e -> {
+            webview.getEngine().executeScript(js+"insertLine()");
+        });
+
+        addColToTable = new MenuItem("add col to table");
+        addColToTable.setOnAction(e->{
+            webview.getEngine().executeScript(js+"insertCol()");
+        });
+
+        webview.setOnContextMenuRequested(e -> getPopupWindow(webview));
     }
+
+    // add col or row to current table
+    // --------------------------------
+    public void addOrRemoveColOrRow(WebView webview, Boolean increase) {
+        List<String> choices = Arrays.asList(I18NHelper.getLabelResourceBundle().getString("col"), I18NHelper.getLabelResourceBundle().getString("row"));
+        ChoiceDialog<String> choice = new ChoiceDialog<String>(choices.get(0), choices);
+        if (Boolean.TRUE.equals(increase)) {
+            choice.setTitle(I18NHelper.getLabelResourceBundle().getString("addColumnOrRow"));
+            choice.setHeaderText(I18NHelper.getLabelResourceBundle().getString("addColumnOrRow"));
+        }
+        else {
+            choice.setTitle(I18NHelper.getLabelResourceBundle().getString("removeColumnOrRow"));
+            choice.setHeaderText(I18NHelper.getLabelResourceBundle().getString("removeColumnOrRow"));
+        }
+        Optional<String> result = choice.showAndWait();
+        result.ifPresent((res) -> {
+            if (res.equals(I18NHelper.getLabelResourceBundle().getString("col"))) {
+                if (Boolean.TRUE.equals(increase)) {
+                    webview.getEngine().executeScript(js + "insertCol();");
+                }
+                else {
+                    webview.getEngine().executeScript(js + "removeCol();");
+                }
+            } else {
+                if (Boolean.TRUE.equals(increase)) {
+                    webview.getEngine().executeScript(js + "insertLine();");
+                } else {
+                    webview.getEngine().executeScript(js + "removeLine();");
+                }
+            }
+        });
+
+    }
+    private PopupWindow getPopupWindow(WebView webview) {
+        @SuppressWarnings("deprecation")
+        final Iterator<Window> windows = Window.impl_getWindows();
+
+        while (windows.hasNext()) {
+            final Window window = windows.next();
+
+            if (window instanceof ContextMenu) {
+                if(window.getScene()!=null && window.getScene().getRoot()!=null){
+                    Parent root = window.getScene().getRoot();
+
+                    // access to context menu content
+                    if(root.getChildrenUnmodifiable().size()>0){
+                        Node popup = root.getChildrenUnmodifiable().get(0);
+                        if(popup.lookup(".context-menu")!=null){
+                            Node bridge = popup.lookup(".context-menu");
+                            ContextMenuContent cmc= (ContextMenuContent)((Parent)bridge).getChildrenUnmodifiable().get(0);
+
+                            VBox itemsContainer = cmc.getItemsContainer();
+                            for (Node node : itemsContainer.getChildren()) {
+                                if (addLineToTable==((ContextMenuContent.MenuItemContainer)node).getItem()) {
+                                    itemsContainer.getChildren().remove(node);
+                                    break;
+                                }
+                                else if (addColToTable==((ContextMenuContent.MenuItemContainer)node).getItem()) {
+                                    itemsContainer.getChildren().remove(node);
+                                    break;
+                                }
+                            }
+                            if (Boolean.TRUE.equals(webview.getEngine().executeScript(js+" isCursorInATable();"))) {
+                                // add new item:
+                                itemsContainer.getChildren().add(cmc.new MenuItemContainer(addLineToTable));
+                                itemsContainer.getChildren().add(cmc.new MenuItemContainer(addColToTable));
+                            }
+
+                            return (PopupWindow)window;
+                        }
+                    }
+                }
+                return null;
+            }
+        }
+        return null;
+    }
+
 
     private String readJs() throws IOException {
         ByteArrayOutputStream bo = new ByteArrayOutputStream();
@@ -110,7 +216,7 @@ public class JNoteEditor extends HTMLEditor implements Observer,NoteEventVisitor
     }
 
     private void insertTable() {
-        StringBuilder table= new StringBuilder("<table border=\\\"1\\\" cellpadding=\\\"0\\\" cellspacing=\\\"0\\\">");
+        StringBuilder table= new StringBuilder("<table border=\\\"1\\\" cellpadding=\\\"1\\\" cellspacing=\\\"0\\\">");
         final TableSize tableSize = new TableSize(currentStage);
         tableSize.showAndWait();
         if (Boolean.TRUE.equals(tableSize.isValidated())) {
@@ -171,6 +277,8 @@ public class JNoteEditor extends HTMLEditor implements Observer,NoteEventVisitor
     private NoteRef currentNoteRef=null;
     private String js;
     private Stage currentStage;
+    private MenuItem addLineToTable;
+    private MenuItem addColToTable;
 
     private final static Logger logger = Logger.getLogger(JNoteEditor.class);
 }
