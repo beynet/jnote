@@ -39,6 +39,12 @@ public class NoteListCell extends ListCell<NoteListItem> {
 //                        });
                     }
                 });
+                textField.focusedProperty().addListener((observable, oldValue, newValue) -> {
+                    if (Boolean.TRUE.equals(oldValue)) {
+                        item.setInEdition(false);
+                    }
+                });
+                textField.requestFocus();
             } else {
                 setText(item.getName());
             }

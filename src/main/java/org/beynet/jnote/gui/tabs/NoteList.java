@@ -29,6 +29,19 @@ public class NoteList extends ListView<NoteListItem> {
         ctxMenu.getItems().add(addNewNote);
         ctxMenu.getItems().add(delNote);
 
+        getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            this.oldSelected = oldValue;
+            if (this.oldSelected!=null) {
+                if (Boolean.TRUE.equals(this.oldSelected.inEdition.getValue())) this.oldSelected.setInEdition(false);
+            }
+        });
+
+        focusedProperty().addListener((observable, oldValue, newValue) -> {
+            if (Boolean.FALSE.equals(newValue)) {
+                oldSelected=null;
+            }
+        });
+
         setCellFactory(param -> {
             NoteListCell result = new NoteListCell();
             result.setOnMouseClicked(event -> {
@@ -41,10 +54,18 @@ public class NoteList extends ListView<NoteListItem> {
                     }
                     ctxMenu.show(this, event.getScreenX(), event.getScreenY());
                 } else if (MouseButton.PRIMARY.equals(event.getButton())) {
-                    if (event.getClickCount() == 2) {
-                        NoteListItem item = result.getItem();
-                        if (item != null) {
-                            item.setInEdition(true);
+                    if (isFocused()==true) {
+                        if (event.getClickCount() == 1) {
+                            NoteListItem item = result.getItem();
+                            if (item != null && item == getSelectionModel().getSelectedItem()) {
+                                if (item != null && item == oldSelected) {
+                                    item.setInEdition(true);
+                                    oldSelected=null;
+                                }
+                                else {
+                                    oldSelected = item;
+                                }
+                            }
                         }
                     }
                 }
@@ -90,6 +111,6 @@ public class NoteList extends ListView<NoteListItem> {
     private ObservableList<NoteListItem> list ;
     private Stage currentStage;
     private ContextMenu ctxMenu;
-
+    private NoteListItem oldSelected = null;
 
 }
