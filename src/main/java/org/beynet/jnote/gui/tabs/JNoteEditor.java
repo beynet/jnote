@@ -274,13 +274,13 @@ public class JNoteEditor extends HTMLEditor implements Observer,NoteEventVisitor
         Controller.unSubscribeToNote(noteRef, this);
         while (attachments.size()>0) attachments.remove(0);
         currentNoteRef = null;
-        autosave.setLastHtml(null);
+        if (autosave!=null) autosave.setLastHtml(null);
     }
 
     public void onNoteSelected(NoteRef noteRef) {
         currentNoteRef = noteRef;
         Controller.subscribeToNote(noteRef,this);
-        autosave.setLastHtml(getHtmlText());
+        if (autosave!=null) autosave.setLastHtml(getHtmlText());
     }
 
     private ObservableList<AttachmentRef> attachments = FXCollections.observableArrayList();
@@ -295,6 +295,9 @@ public class JNoteEditor extends HTMLEditor implements Observer,NoteEventVisitor
 
     private final static Logger logger = Logger.getLogger(JNoteEditor.class);
 
+    /**
+     * start autosave thread associated with current editor
+     */
     public void startAutosave() {
         if (autosave!=null) {
             logger.warn("autosave already started");
@@ -304,6 +307,9 @@ public class JNoteEditor extends HTMLEditor implements Observer,NoteEventVisitor
         autosave.start();
     }
 
+    /**
+     * stop autosave thread associated with current editor
+     */
     public void stopAutosave() {
         if (autosave==null) {
             logger.warn("autosave already stopped");
