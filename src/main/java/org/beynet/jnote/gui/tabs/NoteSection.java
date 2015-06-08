@@ -298,6 +298,13 @@ public class NoteSection extends Tab implements Observer,SectionEventVisitor {
         }
     }
 
+    /**
+     * request editor to stop autosave
+     */
+    public void stopAutosave() {
+        editor.stopAutosave();
+    }
+
     private JNoteEditor editor;
     private NoteSectionRef noteSectionRef;
     private Label labeltitle ;
@@ -307,7 +314,5 @@ public class NoteSection extends Tab implements Observer,SectionEventVisitor {
 
     private final static Logger logger = Logger.getLogger(NoteSection.class);
 
-    public void stopAutosave() {
-        editor.stopAutosave();
-    }
+
 }
