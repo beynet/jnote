@@ -126,7 +126,10 @@ public class NoteBook extends TabPane implements Observer ,NoteBookEventVisitor 
     public void onExit() {
         final Tab selectedItem = getSelectionModel().getSelectedItem();
         if (selectedItem==null) return;
-        if (selectedItem instanceof NoteSection) ((NoteSection)selectedItem).save();
+        if (selectedItem instanceof NoteSection) {
+            ((NoteSection)selectedItem).stopAutosave();
+            ((NoteSection)selectedItem).save();
+        }
     }
 
 

@@ -34,14 +34,15 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
+import java.util.function.Supplier;
 
 /**
  * Created by beynet on 21/04/2015.
  */
 public class JNoteEditor extends HTMLEditor implements Observer,NoteEventVisitor{
-    public JNoteEditor(Stage currentStage) {
+    public JNoteEditor(Stage currentStage,Runnable save) {
         super();
-
+        this.save = save;
         WebView webview = (WebView) lookup("WebView");
         GridPane.setHgrow(webview, Priority.ALWAYS);
         GridPane.setVgrow(webview, Priority.ALWAYS);
@@ -96,9 +97,6 @@ public class JNoteEditor extends HTMLEditor implements Observer,NoteEventVisitor
                 clipboard.setContent(content);
             });
             bar.getItems().add(copyContent);
-
-
-
         }
 
         try {
@@ -120,6 +118,12 @@ public class JNoteEditor extends HTMLEditor implements Observer,NoteEventVisitor
         });
 
         webview.setOnContextMenuRequested(e -> getPopupWindow(webview));
+        this.autosave = null;
+
+        setOnKeyPressed(event -> {
+            if (autosave!=null) autosave.setSkipNextSave(true);
+        });
+
     }
 
     // add col or row to current table
@@ -257,6 +261,11 @@ public class JNoteEditor extends HTMLEditor implements Observer,NoteEventVisitor
         }
     }
 
+    @Override
+    public void setHtmlText(String htmlText) {
+        super.setHtmlText(htmlText);
+    }
+
     /**
      * called when current note is unselected
      * @param noteRef
@@ -265,11 +274,13 @@ public class JNoteEditor extends HTMLEditor implements Observer,NoteEventVisitor
         Controller.unSubscribeToNote(noteRef, this);
         while (attachments.size()>0) attachments.remove(0);
         currentNoteRef = null;
+        autosave.setLastHtml(null);
     }
 
     public void onNoteSelected(NoteRef noteRef) {
         currentNoteRef = noteRef;
         Controller.subscribeToNote(noteRef,this);
+        autosave.setLastHtml(getHtmlText());
     }
 
     private ObservableList<AttachmentRef> attachments = FXCollections.observableArrayList();
@@ -279,6 +290,31 @@ public class JNoteEditor extends HTMLEditor implements Observer,NoteEventVisitor
     private Stage currentStage;
     private MenuItem addLineToTable;
     private MenuItem addColToTable;
+    private AutoSave autosave;
+    private Runnable save;
 
     private final static Logger logger = Logger.getLogger(JNoteEditor.class);
+
+    public void startAutosave() {
+        if (autosave!=null) {
+            logger.warn("autosave already started");
+            return;
+        }
+        autosave = new AutoSave(save,this::getHtmlText,this::isDisable);
+        autosave.start();
+    }
+
+    public void stopAutosave() {
+        if (autosave==null) {
+            logger.warn("autosave already stopped");
+            return;
+        }
+        autosave.interrupt();
+        try {
+            autosave.join();
+            autosave=null;
+        } catch (InterruptedException e) {
+
+        }
+    }
 }

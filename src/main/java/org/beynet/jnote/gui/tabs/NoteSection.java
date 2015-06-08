@@ -86,18 +86,18 @@ public class NoteSection extends Tab implements Observer,SectionEventVisitor {
         hbox.getStyleClass().add(Styles.TAB_CONTENT);
 
         noteList = new NoteList(this.currentStage,noteSectionRef);
-        content = new JNoteEditor(currentStage);
-        content.setDisable(true);
-        hbox.getChildren().add(content);
+        editor = new JNoteEditor(currentStage, this::save);
+        editor.setDisable(true);
+        hbox.getChildren().add(editor);
         hbox.getChildren().add(noteList);
         noteList.setPrefWidth(hbox.getWidth() * 15 / 100);
-        content.setPrefWidth(hbox.getWidth() - noteList.getWidth());
+        editor.setPrefWidth(hbox.getWidth() - noteList.getWidth());
         hbox.widthProperty().addListener((observable1, oldValue1, newValue1) -> {
             noteList.setPrefWidth(newValue1.doubleValue()*15/100);
-            content.setPrefWidth(newValue1.doubleValue() - noteList.getPrefWidth());
+            editor.setPrefWidth(newValue1.doubleValue() - noteList.getPrefWidth());
         });
 
-        content.prefHeightProperty().bind(hbox.heightProperty().subtract(noteList.heightProperty()));
+        editor.prefHeightProperty().bind(hbox.heightProperty().subtract(noteList.heightProperty()));
 
         setContent(hbox);
 
@@ -107,28 +107,28 @@ public class NoteSection extends Tab implements Observer,SectionEventVisitor {
             if (oldValue != null) {
                 if (noteList.getList().contains(oldValue)) {
                     save(oldValue.getNoteRef());
-                    content.onNoteUnSelected(oldValue.getNoteRef());
+                    editor.onNoteUnSelected(oldValue.getNoteRef());
                 }
             }
             if (newValue != null) {
                 NoteRef noteRef = newValue.getNoteRef();
                 logger.debug("change current note");
-                content.setDisable(false);
+                editor.setDisable(false);
                 String contentStr = null;
                 try {
                     contentStr = Controller.getNoteContent(noteRef);
                 } catch (IOException e) {
                     logger.error("unable to read note content", e);
-                    content.setDisable(true);
+                    editor.setDisable(true);
                 }
                 if (contentStr != null) {
-                    content.setHtmlText(contentStr);
+                    editor.setHtmlText(contentStr);
                 } else {
-                    content.setHtmlText("");
+                    editor.setHtmlText("");
                 }
-                content.onNoteSelected(newValue.getNoteRef());
+                editor.onNoteSelected(newValue.getNoteRef());
             } else {
-                content.setDisable(true);
+                editor.setDisable(true);
             }
         });
 
@@ -138,6 +138,7 @@ public class NoteSection extends Tab implements Observer,SectionEventVisitor {
         //saving content when tab change
         setOnSelectionChanged((evt) -> {
             if (isSelected() == false) {
+                editor.stopAutosave();
                 setGraphic(labeltitle);
                 Controller.unSubscribeToNoteSection(noteSectionRef, this);
                 save();
@@ -149,11 +150,12 @@ public class NoteSection extends Tab implements Observer,SectionEventVisitor {
                 } catch (IllegalArgumentException e) {
                     // section is being removed
                 }
+                editor.startAutosave();
             }
         });
 
 
-        content.setOnDragOver(event -> {
+        editor.setOnDragOver(event -> {
             logger.debug("start drag over");
             Dragboard db = event.getDragboard();
             if (db.hasFiles()) {
@@ -164,13 +166,13 @@ public class NoteSection extends Tab implements Observer,SectionEventVisitor {
                 event.consume();
             }
         });
-        content.setOnDragEntered(event -> {
-            if (event.getGestureSource() != content) {
-                content.getStyleClass().add("test");
+        editor.setOnDragEntered(event -> {
+            if (event.getGestureSource() != editor) {
+                editor.getStyleClass().add("test");
             }
         });
 
-        content.setOnDragDropped(event -> {
+        editor.setOnDragDropped(event -> {
             Dragboard db = event.getDragboard();
             boolean success = false;
             logger.debug("on drag dropped");
@@ -178,18 +180,18 @@ public class NoteSection extends Tab implements Observer,SectionEventVisitor {
             if (db.hasFiles()) {
                 success = true;
                 String filePath = null;
-                for (File file:db.getFiles()) {
+                for (File file : db.getFiles()) {
                     final File newFile = file;
                     Task<Void> t = new Task<Void>() {
                         @Override
                         protected Void call() throws Exception {
-                            if (newFile!=null) {
+                            if (newFile != null) {
                                 try {
-                                    Controller.addAttachment(noteRef,newFile.toPath());
+                                    Controller.addAttachment(noteRef, newFile.toPath());
                                 } catch (IOException e) {
-                                    new Alert(currentStage,I18NHelper.getLabelResourceBundle().getString("errorAttachingFile")+e.getMessage(),e).show();
+                                    new Alert(currentStage, I18NHelper.getLabelResourceBundle().getString("errorAttachingFile") + e.getMessage(), e).show();
                                 } catch (AttachmentAlreadyExistException e) {
-                                    new Alert(currentStage,I18NHelper.getLabelResourceBundle().getString("errorFileWithSameName")).show();
+                                    new Alert(currentStage, I18NHelper.getLabelResourceBundle().getString("errorFileWithSameName")).show();
                                 }
                             }
                             return null;
@@ -223,10 +225,10 @@ public class NoteSection extends Tab implements Observer,SectionEventVisitor {
         }
     }
     private void save(NoteRef selectedItem) {
-        logger.debug("saving note content = " + content.getHtmlText() + " note uuid=" + selectedItem.getUUID());
+        logger.debug("saving note content = " + editor.getHtmlText() + " note uuid=" + selectedItem.getUUID());
         if (selectedItem!=null) {
             try {
-                Controller.saveNoteContent(noteSectionRef.getNoteBookRef(), noteSectionRef.getUUID(), selectedItem.getUUID(), content.getHtmlText());
+                Controller.saveNoteContent(noteSectionRef.getNoteBookRef(), noteSectionRef.getUUID(), selectedItem.getUUID(), editor.getHtmlText());
             } catch (IOException e) {
                 //TODO : show an alert
             }
@@ -296,7 +298,7 @@ public class NoteSection extends Tab implements Observer,SectionEventVisitor {
         }
     }
 
-    private JNoteEditor content;
+    private JNoteEditor editor;
     private NoteSectionRef noteSectionRef;
     private Label labeltitle ;
     private TextField fieldTitle ;
@@ -305,4 +307,7 @@ public class NoteSection extends Tab implements Observer,SectionEventVisitor {
 
     private final static Logger logger = Logger.getLogger(NoteSection.class);
 
+    public void stopAutosave() {
+        editor.stopAutosave();
+    }
 }
