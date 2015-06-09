@@ -14,7 +14,7 @@
             <option value="-Xms128m"/>
             <option value="-Xmx128m"/>
             <runtime dir="${env.JAVA_HOME}" />
-            <classpath file="target/jnote-1.0.6-SNAPSHOT-jar-with-dependencies.jar" />
+            <classpath file="target/jnote-1.0.6-jar-with-dependencies.jar" />
         </bundleapp>
     </target>
 
