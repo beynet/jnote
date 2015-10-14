@@ -7,6 +7,8 @@ import java.util.function.Supplier;
 
 /**
  * Created by beynet on 08/06/2015.
+ * This thread is responsible to save the current editor content. Content is saved when last change is older thant 3 seconds
+ * Note that when the editor is closed content is also saved.
  */
 public class AutoSave extends Thread {
 
