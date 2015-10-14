@@ -12,10 +12,7 @@ import org.apache.lucene.search.TermQuery;
 import org.beynet.jnote.controler.AttachmentRef;
 import org.beynet.jnote.exceptions.AttachmentAlreadyExistException;
 import org.beynet.jnote.exceptions.AttachmentNotFoundException;
-import org.beynet.jnote.model.events.section.NoteAdded;
-import org.beynet.jnote.model.events.section.NoteContentChanged;
-import org.beynet.jnote.model.events.section.NoteDeleted;
-import org.beynet.jnote.model.events.section.NoteRenamed;
+import org.beynet.jnote.model.events.section.*;
 import org.xml.sax.InputSource;
 
 import javax.xml.bind.JAXBContext;
@@ -472,11 +469,41 @@ public class NoteSection extends Observable {
     public synchronized void saveNoteContent(String noteBookName,String noteUUID, String content, IndexWriter writer) throws IOException {
         NoteRef noteRef = getNoteRefByUUID(noteUUID);
         Note note = readNote(noteRef.getUUID());
+        if (note.getContent()!=null && note.getContent().equals(content)) return;
+        note.getPreviousContent().add(note.getContent());
+        if (note.getPreviousContent().size()>=10) {
+            note.getPreviousContent().remove(0);
+        }
         note.setContent(content);
         saveNote(note);
         setChanged();
         notifyObservers(new NoteContentChanged(getUUID(), noteUUID, content));
         indexNote(noteBookName, note, writer);
+    }
+
+    /**
+     *
+     * @param noteBookName
+     * @param noteUUID
+     * @param writer
+     * @throws IOException
+     */
+    public synchronized void undoNoteContent(String noteBookName,String noteUUID, IndexWriter writer,String content) throws IOException {
+        NoteRef noteRef = getNoteRefByUUID(noteUUID);
+        Note note = readNote(noteRef.getUUID());
+        // content != last saved we revert to last saved
+        if (content!=null && !content.equals(note.getContent())) {
+            // content has changed
+        }
+        // content==last saved we revert to previous
+        else if (!note.getPreviousContent().isEmpty()) {
+            note.setContent(note.getPreviousContent().get(note.getPreviousContent().size() - 1));
+            note.getPreviousContent().remove(note.getPreviousContent().size() - 1);
+            saveNote(note);
+        }
+        indexNote(noteBookName, note, writer);
+        setChanged();
+        notifyObservers(new NoteContentUndo(getUUID(), noteUUID, note.getContent()));
     }
 
     private void unIndexNote(String uuid,IndexWriter writer) throws IOException {

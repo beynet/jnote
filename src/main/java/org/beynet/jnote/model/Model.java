@@ -165,6 +165,10 @@ public class Model extends Observable implements FileVisitor<Path> {
         NoteBook noteBookByUUID = getNoteBookByUUID(noteBookUUID);
         noteBookByUUID.saveNoteContent(sectionUUID, noteUUID, content, writer);
     }
+    public void undoNoteContent(String noteBookUUID, String sectionUUID, String noteUUID,String content) throws IOException {
+        NoteBook noteBookByUUID = getNoteBookByUUID(noteBookUUID);
+        noteBookByUUID.undoNoteContent(sectionUUID, noteUUID, writer,content);
+    }
 
     public void changeSectionName(String noteBookUUID, String sectionUUID, String name) throws IOException{
         getNoteBookByUUID(noteBookUUID).changeSectionName(writer,sectionUUID, name);
@@ -332,6 +336,5 @@ public class Model extends Observable implements FileVisitor<Path> {
     Map<String,NoteBook> noteBooks ;
     private NoteBook currentNoteBook ;
     private final static Logger logger = Logger.getLogger(Model.class);
-
 
 }

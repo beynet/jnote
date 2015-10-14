@@ -128,7 +128,6 @@ public class NoteBook extends TabPane implements Observer ,NoteBookEventVisitor 
         if (selectedItem==null) return;
         if (selectedItem instanceof NoteSection) {
             ((NoteSection)selectedItem).stopAutosave();
-            ((NoteSection)selectedItem).save();
         }
     }
 

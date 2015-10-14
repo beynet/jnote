@@ -9,6 +9,7 @@ import javafx.scene.Parent;
 import javafx.scene.control.*;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
@@ -18,8 +19,8 @@ import javafx.stage.PopupWindow;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 import org.apache.log4j.Logger;
-import org.beynet.jnote.controler.Controller;
 import org.beynet.jnote.controler.AttachmentRef;
+import org.beynet.jnote.controler.Controller;
 import org.beynet.jnote.controler.NoteRef;
 import org.beynet.jnote.gui.Styles;
 import org.beynet.jnote.gui.dialogs.FileManagement;
@@ -34,15 +35,14 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
-import java.util.function.Supplier;
 
 /**
  * Created by beynet on 21/04/2015.
  */
 public class JNoteEditor extends HTMLEditor implements Observer,NoteEventVisitor{
-    public JNoteEditor(Stage currentStage,Runnable save) {
+    public JNoteEditor(Stage currentStage,Runnable undo) {
         super();
-        this.save = save;
+        this.undo = undo;
         WebView webview = (WebView) lookup("WebView");
         GridPane.setHgrow(webview, Priority.ALWAYS);
         GridPane.setVgrow(webview, Priority.ALWAYS);
@@ -121,7 +121,10 @@ public class JNoteEditor extends HTMLEditor implements Observer,NoteEventVisitor
         this.autosave = null;
 
         setOnKeyPressed(event -> {
-            if (autosave!=null) autosave.setSkipNextSave(true);
+            if (autosave != null) autosave.setSkipNextSave(true);
+            if (event.isControlDown() && event.getCode().equals(KeyCode.O)) {
+                undo.run();
+            }
         });
 
     }
@@ -263,7 +266,15 @@ public class JNoteEditor extends HTMLEditor implements Observer,NoteEventVisitor
 
     @Override
     public void setHtmlText(String htmlText) {
+        autosave.setSkipNextSave(true);
         super.setHtmlText(htmlText);
+        if (autosave!=null) autosave.setLastHtml(htmlText);
+    }
+
+    @Override
+    public void requestFocus() {
+        WebView webview = (WebView) lookup("WebView");
+        webview.getEngine().executeScript(js+"focus()");
     }
 
     /**
@@ -271,6 +282,7 @@ public class JNoteEditor extends HTMLEditor implements Observer,NoteEventVisitor
      * @param noteRef
      */
     public void onNoteUnSelected(NoteRef noteRef) {
+        autosave.save();
         Controller.unSubscribeToNote(noteRef, this);
         while (attachments.size()>0) attachments.remove(0);
         currentNoteRef = null;
@@ -283,6 +295,15 @@ public class JNoteEditor extends HTMLEditor implements Observer,NoteEventVisitor
         if (autosave!=null) autosave.setLastHtml(getHtmlText());
     }
 
+    private void save() {
+        logger.debug("saving note content = " + getHtmlText() + " note uuid=" +currentNoteRef.getUUID());
+        try {
+            Controller.saveNoteContent(currentNoteRef.getNoteSectionRef().getNoteBookRef(), currentNoteRef.getNoteSectionRef().getUUID(), currentNoteRef.getUUID(), getHtmlText());
+        } catch (IOException e) {
+            logger.error("error saving note",e);
+        }
+    }
+
     private ObservableList<AttachmentRef> attachments = FXCollections.observableArrayList();
     private ComboBox<AttachmentRef> attachmentCombo ;
     private NoteRef currentNoteRef=null;
@@ -291,7 +312,7 @@ public class JNoteEditor extends HTMLEditor implements Observer,NoteEventVisitor
     private MenuItem addLineToTable;
     private MenuItem addColToTable;
     private AutoSave autosave;
-    private Runnable save;
+    private Runnable undo;
 
     private final static Logger logger = Logger.getLogger(JNoteEditor.class);
 
@@ -303,7 +324,7 @@ public class JNoteEditor extends HTMLEditor implements Observer,NoteEventVisitor
             logger.warn("autosave already started");
             return;
         }
-        autosave = new AutoSave(save,this::getHtmlText,this::isDisable);
+        autosave = new AutoSave(this::save,this::getHtmlText,this::isDisable);
         autosave.start();
     }
 

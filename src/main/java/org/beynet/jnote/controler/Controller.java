@@ -55,6 +55,11 @@ public class Controller {
         Model.getInstance().saveNoteContent(noteBook.getUUID(), sectionUUID, noteUUID, content);
     }
 
+    public static void undoNoteContent(NoteBookRef noteBook, String sectionUUID, String noteUUID, String htmlText) throws IOException{
+        Model.getInstance().undoNoteContent(noteBook.getUUID(), sectionUUID, noteUUID,htmlText);
+    }
+
+
     public static void changeSectionName(NoteBookRef noteBook, String sectionUUID, String name) throws IOException {
         Model.getInstance().changeSectionName(noteBook.getUUID(), sectionUUID, name);
     }

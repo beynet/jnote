@@ -86,7 +86,7 @@ public class NoteSection extends Tab implements Observer,SectionEventVisitor {
         hbox.getStyleClass().add(Styles.TAB_CONTENT);
 
         noteList = new NoteList(this.currentStage,noteSectionRef);
-        editor = new JNoteEditor(currentStage, this::save);
+        editor = new JNoteEditor(currentStage, this::undo);
         editor.setDisable(true);
         hbox.getChildren().add(editor);
         hbox.getChildren().add(noteList);
@@ -106,7 +106,6 @@ public class NoteSection extends Tab implements Observer,SectionEventVisitor {
         noteList.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             if (oldValue != null) {
                 if (noteList.getList().contains(oldValue)) {
-                    save(oldValue.getNoteRef());
                     editor.onNoteUnSelected(oldValue.getNoteRef());
                 }
             }
@@ -141,7 +140,6 @@ public class NoteSection extends Tab implements Observer,SectionEventVisitor {
                 editor.stopAutosave();
                 setGraphic(labeltitle);
                 Controller.unSubscribeToNoteSection(noteSectionRef, this);
-                save();
                 while (noteList.getList().size() > 0) noteList.getList().remove(0);
             } else {
                 justSelected = Boolean.TRUE;
@@ -218,22 +216,21 @@ public class NoteSection extends Tab implements Observer,SectionEventVisitor {
         return false;
     }
 
-    void save() {
+    void undo() {
+        logger.info("undo");
         final NoteListItem selectedItem = noteList.getSelectionModel().getSelectedItem();
         if (selectedItem!=null) {
-            save(selectedItem.getNoteRef());
-        }
-    }
-    private void save(NoteRef selectedItem) {
-        logger.debug("saving note content = " + editor.getHtmlText() + " note uuid=" + selectedItem.getUUID());
-        if (selectedItem!=null) {
             try {
-                Controller.saveNoteContent(noteSectionRef.getNoteBookRef(), noteSectionRef.getUUID(), selectedItem.getUUID(), editor.getHtmlText());
+                Controller.undoNoteContent(noteSectionRef.getNoteBookRef(), noteSectionRef.getUUID(), selectedItem.getNoteRef().getUUID(),editor.getHtmlText());
             } catch (IOException e) {
-                //TODO : show an alert
+
             }
         }
     }
+
+
+
+
 
     public String getUUID() {
         return noteSectionRef.getUUID();
@@ -274,6 +271,12 @@ public class NoteSection extends Tab implements Observer,SectionEventVisitor {
     @Override
     public void visit(NoteContentChanged noteContentChanged) {
 
+    }
+
+    @Override
+    public void visit(NoteContentUndo noteContentUndo) {
+        editor.setHtmlText(noteContentUndo.getContent());
+        Platform.runLater(()->editor.requestFocus());
     }
 
     @Override

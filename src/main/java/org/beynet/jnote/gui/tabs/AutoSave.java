@@ -25,12 +25,7 @@ public class AutoSave extends Thread {
         logger.info("starting autosave");
         while(Thread.currentThread().isInterrupted()==false) {
             if (Boolean.FALSE.equals(isDisable.get()) && isSkipNextSave()==false) {
-                String newHTML = htmlSupplier.get();
-                if (getLastHtml()!=null && !getLastHtml().equals(newHTML)) {
-                    logger.debug("!!!!!! autosaving");
-                    setLastHtml(newHTML);
-                    save.run();
-                }
+                save();
             }
             setSkipNextSave(false);
             synchronized (this) {
@@ -42,6 +37,17 @@ public class AutoSave extends Thread {
             }
         }
         logger.info("autosave stopped");
+        interrupted();
+        save();
+    }
+
+    protected void save() {
+        String newHTML = htmlSupplier.get();
+        if (getLastHtml()!=null && !getLastHtml().equals(newHTML)) {
+            logger.debug("!!!!!! autosaving");
+            setLastHtml(newHTML);
+            save.run();
+        }
     }
 
     public synchronized String getLastHtml() {

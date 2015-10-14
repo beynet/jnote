@@ -129,6 +129,9 @@ function insertCol() {
         }
     }
 }
+function focus() {
+    document.body.focus();
+}
 
 function removeCol() {
     if (isCursorInATable()) {

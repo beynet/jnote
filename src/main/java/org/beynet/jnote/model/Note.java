@@ -56,6 +56,11 @@ public class Note  {
         this.content = content;
     }
 
+    @XmlElement(name="previousContents")
+    public List<String> getPreviousContent() {
+        return previousContent;
+    }
+
     @XmlAttribute(name = "name")
     public String getName() {
         return name;
@@ -104,6 +109,6 @@ public class Note  {
     private long   created  ;
     private String UUID     ;
     private List<Attachment> attachments = new ArrayList<>();
-
+    private List<String> previousContent = new ArrayList<>();
 
 }

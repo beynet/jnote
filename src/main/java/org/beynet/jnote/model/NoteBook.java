@@ -162,6 +162,12 @@ public class NoteBook extends Observable {
         NoteSection sectionByUUID = getSectionByUUID(uuid);
         sectionByUUID.saveNoteContent(getName(),noteUUID, content, writer);
     }
+    public void undoNoteContent(String uuid, String noteUUID, IndexWriter writer,String content) throws IllegalArgumentException,IOException {
+        NoteSection sectionByUUID = getSectionByUUID(uuid);
+        sectionByUUID.undoNoteContent(getName(),noteUUID, writer,content);
+    }
+
+
 
     public void changeSectionName(IndexWriter writer,String uuid, String name) throws IllegalArgumentException,IOException {
         final NoteSection section = getSectionByUUID(uuid);
