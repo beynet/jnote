@@ -276,7 +276,7 @@ public class NoteSection extends Tab implements Observer,SectionEventVisitor {
     @Override
     public void visit(NoteContentUndo noteContentUndo) {
         editor.setHtmlText(noteContentUndo.getContent());
-        Platform.runLater(()->editor.requestFocus());
+        editor.requestFocus();
     }
 
     @Override

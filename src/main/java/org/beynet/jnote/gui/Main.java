@@ -7,6 +7,9 @@ import javafx.scene.Scene;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyCodeCombination;
+import javafx.scene.input.KeyCombination;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 import org.apache.log4j.BasicConfigurator;
@@ -162,6 +165,7 @@ public class Main extends Application {
         // --------------
         {
             final MenuItem exit = new MenuItem(labelResourceBundle.getString("exit"));
+            exit.setAccelerator(new KeyCodeCombination(KeyCode.Q, KeyCombination.META_DOWN));
             exit.setOnAction((evt) -> {
                 exitApplication();
             });

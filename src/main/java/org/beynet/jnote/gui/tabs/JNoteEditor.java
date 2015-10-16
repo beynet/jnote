@@ -69,6 +69,7 @@ public class JNoteEditor extends HTMLEditor implements Observer,NoteEventVisitor
             Button insertTable = new Button("table");
             insertTable.setTooltip(new Tooltip(I18NHelper.getLabelResourceBundle().getString("createATableTooltip")));
             insertTable.setOnAction(event -> {
+                if (autosave != null) autosave.setSkipNextSave(true);
                 if (Boolean.TRUE.equals(webview.getEngine().executeScript(js+"isCursorInATable()"))) {
                     List<String> choice = Arrays.asList(I18NHelper.getLabelResourceBundle().getString("increase"),I18NHelper.getLabelResourceBundle().getString("reduce"));
                     ChoiceDialog<String> increaseOrReduceTableDimension = new ChoiceDialog<String>(choice.get(0),choice);
@@ -97,6 +98,15 @@ public class JNoteEditor extends HTMLEditor implements Observer,NoteEventVisitor
                 clipboard.setContent(content);
             });
             bar.getItems().add(copyContent);
+
+            Button undoButton = new Button("undo");
+            undoButton.setTooltip(new Tooltip(I18NHelper.getLabelResourceBundle().getString("undo")));
+            undoButton.setOnAction(event -> {
+                if (autosave != null) autosave.setSkipNextSave(true);
+                undo.run();
+            });
+            bar.getItems().add(undoButton);
+
         }
 
         try {
@@ -122,9 +132,9 @@ public class JNoteEditor extends HTMLEditor implements Observer,NoteEventVisitor
 
         setOnKeyPressed(event -> {
             if (autosave != null) autosave.setSkipNextSave(true);
-            if (event.isControlDown() && event.getCode().equals(KeyCode.O)) {
-                undo.run();
-            }
+//            if (event.isShortcutDown() && event.getText().equalsIgnoreCase("z")) {
+//                undo.run();
+//            }
         });
 
     }
@@ -273,8 +283,12 @@ public class JNoteEditor extends HTMLEditor implements Observer,NoteEventVisitor
 
     @Override
     public void requestFocus() {
-        WebView webview = (WebView) lookup("WebView");
-        webview.getEngine().executeScript(js+"focus()");
+        Platform.runLater(()-> {
+
+            super.requestFocus();
+            WebView webview = (WebView) lookup("WebView");
+            webview.getEngine().executeScript(js + "focus()");
+        });
     }
 
     /**
