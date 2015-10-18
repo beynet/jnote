@@ -1,6 +1,5 @@
 package org.beynet.jnote.gui.tabs;
 
-import javafx.application.Platform;
 import org.apache.log4j.Logger;
 
 import java.util.function.Supplier;
@@ -37,8 +36,13 @@ public class AutoSave extends Thread {
             }
         }
         logger.info("autosave stopped");
+        // we clear the interrupt flag or the following save
+        // will fail : the zip filesystem does not work in an interrupted thread
+        // -----------------------------------------------------------------------
         interrupted();
         save();
+        interrupt();
+        logger.info("end of autosave");
     }
 
     protected void save() {

@@ -3,16 +3,17 @@ package org.beynet.jnote.gui.tabs;
 import com.sun.javafx.scene.control.skin.ContextMenuContent;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.control.*;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
-import javafx.scene.input.KeyCode;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.scene.web.HTMLEditor;
 import javafx.scene.web.WebView;
 import javafx.stage.PopupWindow;
@@ -29,17 +30,25 @@ import org.beynet.jnote.model.events.note.AttachmentAddedToNote;
 import org.beynet.jnote.model.events.note.AttachmentRemovedFromNote;
 import org.beynet.jnote.model.events.note.NoteEvent;
 import org.beynet.jnote.model.events.note.NoteEventVisitor;
+import org.beynet.jnote.utils.Configuration;
 import org.beynet.jnote.utils.I18NHelper;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
+ * The jnote editor based on HTMLEditor
  * Created by beynet on 21/04/2015.
  */
 public class JNoteEditor extends HTMLEditor implements Observer,NoteEventVisitor{
+    private ToolBar bottomToolbar ;
+    private ToolBar topToolbar;
+    private ComboBox fonts;
+    private ColorPicker fontColor;
     public JNoteEditor(Stage currentStage,Runnable undo) {
         super();
         this.undo = undo;
@@ -47,15 +56,37 @@ public class JNoteEditor extends HTMLEditor implements Observer,NoteEventVisitor
         GridPane.setHgrow(webview, Priority.ALWAYS);
         GridPane.setVgrow(webview, Priority.ALWAYS);
 
+
         this.currentStage=currentStage;
         getStyleClass().add(Styles.EDITOR);
-        Node node = lookup(".top-toolbar");
+
+        // lookup for top toolbar to add some button
+        // -----------------------------------------
+        Node node = lookup(".bottom-toolbar");
         if (node instanceof ToolBar) {
-            ToolBar bar = (ToolBar) node;
+            bottomToolbar = (ToolBar) node;
+            //ObservableList<Node> items = bottomToolbar.getItems();
+            /*items.addListener((ListChangeListener<Node>) c -> {
+                while (c.next()==true) {
+                    if (c.wasAdded()==true) {
+                        for (Node n : c.getAddedSubList()) {
+                            System.out.println(n);
+                        }
+                    }
+                }
+            });*/
+        }
+
+        // lookup for top toolbar to add some button
+        // -----------------------------------------
+        node = lookup(".top-toolbar");
+        if (node instanceof ToolBar) {
+            topToolbar = (ToolBar) node;
+
             attachmentCombo = new ComboBox<>(attachments);
             attachmentCombo.setCellFactory(param -> new AttachmentRefCell());
             attachmentCombo.setPromptText(I18NHelper.getLabelResourceBundle().getString("attachments"));
-            bar.getItems().add(attachmentCombo);
+            topToolbar.getItems().add(attachmentCombo);
             attachmentCombo.setOnAction(event -> {
                 final AttachmentRef selected = attachmentCombo.getSelectionModel().getSelectedItem();
                 if (selected!=null) {
@@ -87,7 +118,7 @@ public class JNoteEditor extends HTMLEditor implements Observer,NoteEventVisitor
                     insertTable();
                 }
             });
-            bar.getItems().add(insertTable);
+            topToolbar.getItems().add(insertTable);
 
             Button copyContent = new Button("A");
             copyContent.setTooltip(new Tooltip(I18NHelper.getLabelResourceBundle().getString("copyAllContent")));
@@ -97,7 +128,7 @@ public class JNoteEditor extends HTMLEditor implements Observer,NoteEventVisitor
                 content.putHtml(getHtmlText());
                 clipboard.setContent(content);
             });
-            bar.getItems().add(copyContent);
+            topToolbar.getItems().add(copyContent);
 
             Button undoButton = new Button("undo");
             undoButton.setTooltip(new Tooltip(I18NHelper.getLabelResourceBundle().getString("undo")));
@@ -105,7 +136,7 @@ public class JNoteEditor extends HTMLEditor implements Observer,NoteEventVisitor
                 if (autosave != null) autosave.setSkipNextSave(true);
                 undo.run();
             });
-            bar.getItems().add(undoButton);
+            topToolbar.getItems().add(undoButton);
 
         }
 
@@ -137,6 +168,67 @@ public class JNoteEditor extends HTMLEditor implements Observer,NoteEventVisitor
 //            }
         });
 
+        // the second item added to the toolbar is the fonts tool bar
+        // ----------------------------------------------------------
+        bottomToolbar.getItems().addListener((ListChangeListener<Node>) c -> {
+            if (fonts==null) {
+                while (c.next()) {
+                    if (bottomToolbar.getItems().size()>=2) {
+                        fonts = (ComboBox) bottomToolbar.getItems().get(1);
+                        // when font observable list is changed
+                        // we clear its content and replace it with our own
+                        // -------------------------------------------------
+                        fonts.itemsProperty().addListener((observable, oldValue, newValue) -> {
+                            if (oldValue != newValue) {
+                                Platform.runLater(() -> {
+                                    updateFontList(fonts, (ObservableList<String>) newValue);
+                                });
+                            }
+                        });
+                    }
+                }
+            }
+        });
+
+        //first color picker is the expected
+        topToolbar.getItems().addListener((ListChangeListener<Node>) c -> {
+            while (c.next()) {
+                if (c.wasAdded()) {
+                    for (Node node1 : c.getAddedSubList()) {
+                        if (fontColor==null && node1 instanceof ColorPicker) {
+                            fontColor = (ColorPicker) node1;
+                            Platform.runLater(()->{
+                                String color = Configuration.getInstance().getPreferredColor();
+                                Matcher m = COLOR_PATTERN.matcher(color);
+                                if (m.matches()) {
+                                    Color def = Color.rgb(Integer.valueOf(m.group(1)), Integer.valueOf(m.group(2)), Integer.valueOf(m.group(3)));
+                                    fontColor.getCustomColors().add(def);
+                                }
+                            });
+
+                        }
+                    }
+                }
+            }
+
+        });
+
+    }
+
+    protected void updateFontList(ComboBox<String> fonts,ObservableList<String> fontList) {
+        for (int i=fontList.size()-1;i>=0;i--) {
+            fontList.remove(i);
+        }
+        int offset = -1;
+        int fontOffset = -1 ;
+        for (String font : Configuration.getInstance().getFontList()) {
+            offset++;
+            fontList.add(font);
+            if (Configuration.getInstance().getPreferredFont().equals(font)) {
+                fontOffset=offset;
+            }
+        }
+        if (fontOffset!=-1) fonts.getSelectionModel().select(fontOffset);
     }
 
     // add col or row to current table
@@ -276,7 +368,10 @@ public class JNoteEditor extends HTMLEditor implements Observer,NoteEventVisitor
 
     @Override
     public void setHtmlText(String htmlText) {
-        autosave.setSkipNextSave(true);
+        if (htmlText==null ||"".equals(htmlText)) {
+            htmlText="<p  style=\"color :"+Configuration.getInstance().getPreferredColor()+"; font-family: '"+Configuration.getInstance().getPreferredFont()+"'\">&nbsp;</p>";
+        }
+        if (autosave!=null) autosave.setSkipNextSave(true);
         super.setHtmlText(htmlText);
         if (autosave!=null) autosave.setLastHtml(htmlText);
     }
@@ -358,4 +453,7 @@ public class JNoteEditor extends HTMLEditor implements Observer,NoteEventVisitor
 
         }
     }
+
+
+    private final static Pattern COLOR_PATTERN = Pattern.compile("rgb\\((\\d+),(\\d+),(\\d+)\\)");
 }

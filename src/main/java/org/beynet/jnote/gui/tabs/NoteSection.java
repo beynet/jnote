@@ -63,6 +63,7 @@ public class NoteSection extends Tab implements Observer,SectionEventVisitor {
             Confirm confirmDeleteSection = new Confirm(currentStage, I18NHelper.getLabelResourceBundle().getString("confirmDeleteSection"));
             confirmDeleteSection.showAndWait();
             if (confirmDeleteSection.isConfirmed()) {
+                editor.stopAutosave();
                 try {
                     Controller.deleteSection(noteSectionRef);
                 } catch (IOException e) {
