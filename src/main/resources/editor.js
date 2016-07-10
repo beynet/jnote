@@ -13,13 +13,23 @@ function insertHtmlAtCursor(html) {
     }
 }
 
-function isCursorInATable() {
+
+function getParentTD() {
     var selection = window.getSelection();
     var range = selection.getRangeAt(0);
     var node = range.startContainer;
-    if (node.parentNode.nodeName=="TD") {
-        return true;
+    while (node.parentNode!=null) {
+        node=node.parentNode;
+        if (node.nodeName == "TD") {
+            return node;
+        }
     }
+    return null;
+}
+
+function isCursorInATable() {
+    var node = getParentTD();
+    if (node!=null) return true;
     return false;
 }
 
@@ -28,13 +38,11 @@ function isCursorInATable() {
  */
 function insertLine() {
     if (isCursorInATable()) {
-        var selection = window.getSelection();
-        var range = selection.getRangeAt(0);
-        var node = range.startContainer;
         var currentTR;
         var tbody;
-        if (node.parentNode.nodeName==="TD") {
-            var current = node.parentNode;
+        var td = getParentTD();
+        if (td!=null) {
+            var current = td.parentNode;
             while (current.nodeName!=="TR") {
                 current=current.parentNode;
             }
@@ -63,13 +71,11 @@ function insertLine() {
 
 function removeLine() {
     if (isCursorInATable()) {
-        var selection = window.getSelection();
-        var range = selection.getRangeAt(0);
-        var node = range.startContainer;
+        var td = getParentTD();
         var currentTR;
         var tbody;
-        if (node.parentNode.nodeName==="TD") {
-            var current = node.parentNode;
+        if (td!=null) {
+            var current = td.parentNode;
             while (current.nodeName!=="TR") {
                 current=current.parentNode;
             }
@@ -87,15 +93,15 @@ function removeLine() {
 
 function insertCol() {
     if (isCursorInATable()) {
-        var selection = window.getSelection();
-        var range = selection.getRangeAt(0);
-        var node = range.startContainer;
-        var currentTD;
+        var currentTD = getParentTD();
         var nodeOffset=0;
         var tbody;
-        if (node.parentNode.nodeName==="TD") {
-            currentTD = node.parentNode;
-            tbody=currentTD.parentNode.parentNode;
+        if (currentTD!=null) {
+            var current = currentTD;
+            while (current.nodeName!="TBODY") {
+                current=current.parentNode;
+            }
+            tbody=current;
 
             // compute current TD offset
             var n = currentTD;
@@ -135,15 +141,15 @@ function focus() {
 
 function removeCol() {
     if (isCursorInATable()) {
-        var selection = window.getSelection();
-        var range = selection.getRangeAt(0);
-        var node = range.startContainer;
-        var currentTD;
+        var currentTD=getParentTD();
         var nodeOffset=0;
         var tbody;
-        if (node.parentNode.nodeName==="TD") {
-            currentTD = node.parentNode;
-            tbody=currentTD.parentNode.parentNode;
+        if (currentTD!=null) {
+            var current = currentTD;
+            while (current.nodeName!="TBODY") {
+                current=current.parentNode;
+            }
+            tbody=current;
 
             // compute current TD offset
             var n = currentTD;
