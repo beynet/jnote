@@ -13,7 +13,7 @@
 	    mainclassname="org.beynet.jnote.gui.Main">
             <option value="-Xms128m"/>
             <runtime dir="${env.JAVA_HOME}" />
-            <classpath file="target/jnote-1.0.10-SNAPSHOT-jar-with-dependencies.jar" />
+            <classpath file="target/jnote-1.0.10-jar-with-dependencies.jar" />
         </bundleapp>
     </target>
 
