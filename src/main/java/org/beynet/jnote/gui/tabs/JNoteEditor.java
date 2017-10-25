@@ -1,24 +1,20 @@
 package org.beynet.jnote.gui.tabs;
 
-import com.sun.javafx.scene.control.skin.ContextMenuContent;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
-import javafx.scene.Parent;
 import javafx.scene.control.*;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
+import javafx.scene.input.MouseButton;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
-import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.web.HTMLEditor;
 import javafx.scene.web.WebView;
-import javafx.stage.PopupWindow;
 import javafx.stage.Stage;
-import javafx.stage.Window;
 import org.apache.log4j.Logger;
 import org.beynet.jnote.controler.AttachmentRef;
 import org.beynet.jnote.controler.Controller;
@@ -157,8 +153,9 @@ public class JNoteEditor extends HTMLEditor implements Observer,NoteEventVisitor
         addColToTable.setOnAction(e->{
             webview.getEngine().executeScript(js+"insertCol()");
         });
-
-        webview.setOnContextMenuRequested(e -> getPopupWindow(webview));
+        webview.setContextMenuEnabled(false);
+        createContextMenu(webview);
+        //webview.setOnContextMenuRequested(e -> getPopupWindow(webview));
         this.autosave = null;
 
         setOnKeyPressed(event -> {
@@ -214,6 +211,29 @@ public class JNoteEditor extends HTMLEditor implements Observer,NoteEventVisitor
         });
 
     }
+    private void createContextMenu(WebView webView) {
+        ContextMenu c = new ContextMenu();
+        String script = js.concat(" isCursorInATable();");
+        webView.setOnMousePressed(e -> {
+            System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+            if (e.getButton() == MouseButton.SECONDARY) {
+                System.out.println( webView.getEngine().executeScript("document.elementFromPoint("
+                    +e.getX()
+                    +"," +  e.getY()+").tagName;"));
+                if (Boolean.TRUE.equals(webView.getEngine().executeScript(script))) {
+                    // add new item:
+                    c.getItems().add(addLineToTable);
+                    c.getItems().add(addColToTable);
+                }
+                else {
+                    c.getItems().removeAll(addColToTable,addLineToTable);
+                }
+                c.show(webView, e.getScreenX(), e.getScreenY());
+            } else {
+                c.hide();
+            }
+        });
+    }
 
     protected void updateFontList(ComboBox<String> fonts,ObservableList<String> fontList) {
         for (int i=fontList.size()-1;i>=0;i--) {
@@ -263,7 +283,7 @@ public class JNoteEditor extends HTMLEditor implements Observer,NoteEventVisitor
         });
 
     }
-    private PopupWindow getPopupWindow(WebView webview) {
+   /* private PopupWindow getPopupWindow(WebView webview) {
         @SuppressWarnings("deprecation")
         final Iterator<Window> windows = Window.impl_getWindows();
 
@@ -306,7 +326,7 @@ public class JNoteEditor extends HTMLEditor implements Observer,NoteEventVisitor
             }
         }
         return null;
-    }
+    }*/
 
 
     private String readJs() throws IOException {

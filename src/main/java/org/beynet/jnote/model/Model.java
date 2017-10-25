@@ -309,7 +309,7 @@ public class Model extends Observable implements FileVisitor<Path> {
     }
 
     private IndexReader createReader() throws IOException {
-        return DirectoryReader.open(writer, true);
+        return DirectoryReader.open(writer, true,true);
     }
 
     /**
