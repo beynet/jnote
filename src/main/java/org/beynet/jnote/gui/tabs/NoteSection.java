@@ -16,6 +16,7 @@ import org.beynet.jnote.controler.NoteRef;
 import org.beynet.jnote.controler.NoteSectionRef;
 import org.beynet.jnote.exceptions.AttachmentAlreadyExistException;
 import org.beynet.jnote.gui.Styles;
+import org.beynet.jnote.gui.TextFieldWithStandardShortcuts;
 import org.beynet.jnote.gui.dialogs.Alert;
 import org.beynet.jnote.gui.dialogs.Confirm;
 import org.beynet.jnote.model.events.section.*;
@@ -37,7 +38,7 @@ public class NoteSection extends Tab implements Observer,SectionEventVisitor {
         this.currentStage = currentStage;
         this.noteSectionRef = new NoteSectionRef(noteBookRef,UUID,name);
         labeltitle = new Label(name);
-        fieldTitle = new TextField();
+        fieldTitle = new TextFieldWithStandardShortcuts();
         fieldTitle.focusedProperty().addListener((observable, oldValue, newValue) -> {
             if (Boolean.FALSE.equals(newValue)) {
                 setGraphic(labeltitle);

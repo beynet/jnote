@@ -6,6 +6,7 @@ import javafx.scene.control.TextField;
 import org.apache.log4j.Logger;
 import org.beynet.jnote.controler.Controller;
 import org.beynet.jnote.controler.NoteRef;
+import org.beynet.jnote.gui.TextFieldWithStandardShortcuts;
 import org.beynet.jnote.gui.dialogs.Alert;
 
 import java.io.IOException;
@@ -25,7 +26,7 @@ public class NoteListCell extends ListCell<NoteListItem> {
         setGraphic(null);
         if (item!=null && empty==false) {
             if (item.isInEdition()) {
-                final TextField textField = new TextField(item.getName());
+                final TextField textField = new TextFieldWithStandardShortcuts(item.getName());
                 setGraphic(textField);
                 textField.setOnAction(event -> {
                     final NoteRef noteRef = item.getNoteRef();
