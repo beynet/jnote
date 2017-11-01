@@ -389,7 +389,7 @@ public class JNoteEditor extends HTMLEditor implements Observer,NoteEventVisitor
     @Override
     public void setHtmlText(String htmlText) {
         if (htmlText==null ||"".equals(htmlText)) {
-            htmlText="<p  style=\"color :"+Configuration.getInstance().getPreferredColor()+"; font-family: '"+Configuration.getInstance().getPreferredFont()+"'\">&nbsp;</p>";
+            htmlText="<body  style=\"color :"+Configuration.getInstance().getPreferredColor()+"; font-family: '"+Configuration.getInstance().getPreferredFont()+"'\"></body>";
         }
         if (autosave!=null) autosave.setSkipNextSave(true);
         super.setHtmlText(htmlText);
