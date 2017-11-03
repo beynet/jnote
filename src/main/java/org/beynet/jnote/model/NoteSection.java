@@ -460,14 +460,15 @@ public class NoteSection extends Observable {
      * @param noteUUID
      * @throws IOException
      */
-    public synchronized void delNote(String noteUUID) throws IOException {
+    public synchronized void delNote(String noteUUID,IndexWriter writer) throws IOException {
         NoteRef note = getNoteRefByUUID(noteUUID);
+        unIndexNote(note.getUUID(),writer);
         delNoteFromZip(note);
         setChanged();
         notifyObservers(new NoteDeleted(note.getUUID()));
     }
 
-    public synchronized void moveNoteTo(NoteSection newSection,String noteUUID) throws IOException,AttachmentAlreadyExistException {
+    public synchronized void moveNoteTo(NoteSection newSection,String noteUUID,IndexWriter writer) throws IOException,AttachmentAlreadyExistException {
         try (FileSystem fileSystem = NoteSection.getZipFileSystem(this.getPath(), true)) {
             Note note = _readNote(noteUUID, fileSystem);
             List<Attachment> attachments = new ArrayList<>();
@@ -479,12 +480,12 @@ public class NoteSection extends Observable {
                 try {
                     newSection.addNoteAttachment(noteUUID, attachFile,attachment.getName());
                 }catch(AttachmentAlreadyExistException e) {
-                    newSection.delNote(noteUUID);
+                    newSection.delNote(noteUUID,writer);
                     throw e;
                 }
             }
         }
-        delNote(noteUUID);
+        delNote(noteUUID,writer);
     }
 
     public synchronized void delete(IndexWriter writer) throws IOException {

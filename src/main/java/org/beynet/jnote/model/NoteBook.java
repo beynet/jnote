@@ -192,9 +192,9 @@ public class NoteBook extends Observable {
     public void adoptNote(String sectionUUID,Note note) throws IOException {
         getSectionByUUID(sectionUUID).adoptNote(note);
     }
-    public void delNote(String sectionUUID,String noteUUID) throws IOException {
+    public void delNote(String sectionUUID,String noteUUID,IndexWriter writer) throws IOException {
         NoteSection section = getSectionByUUID(sectionUUID);
-        section.delNote(noteUUID);
+        section.delNote(noteUUID,writer);
     }
     public void delete(IndexWriter writer) throws IOException {
         synchronized (sectionsMap) {
@@ -292,8 +292,8 @@ public class NoteBook extends Observable {
      * @param noteUUID
      * @param newSection
      */
-    public void moveNote(String currentSectionUUID, String noteUUID, NoteSection newSection) throws IOException, AttachmentAlreadyExistException {
-        getSectionByUUID(currentSectionUUID).moveNoteTo(newSection,noteUUID);
+    public void moveNote(String currentSectionUUID, String noteUUID, NoteSection newSection,IndexWriter writer) throws IOException, AttachmentAlreadyExistException {
+        getSectionByUUID(currentSectionUUID).moveNoteTo(newSection,noteUUID,writer);
     }
 
     private Path path;

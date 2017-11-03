@@ -119,30 +119,6 @@ public class ModelTests extends DefaultTest {
 
     }
 
-    @Test
-    public void moveNote() throws IOException {
-        String htmlContent = "<html></html>";
-
-        Path tmpDir = Paths.get(System.getProperty("java.io.tmpdir"));
-        Path section1Path = Files.createTempFile(tmpDir, "section1_", ".zip");
-        if (Files.exists(section1Path)) Files.delete(section1Path);
-
-        Path section2Path = Files.createTempFile(tmpDir, "section2_", ".zip");
-        if (Files.exists(section2Path)) Files.delete(section2Path);
-
-        NoteSection section1 = NoteSection.fromAbsoluteZipFilePath(section1Path);
-        Note note = new Note();
-        note.setContent(htmlContent);
-        section1.addNote(note);
-
-        NoteSection section2 = NoteSection.fromAbsoluteZipFilePath(section2Path);
-
-        section1.delNote(note.getUUID());
-        section2.addNote(note);
-
-
-    }
-
     @Test(expected = IllegalArgumentException.class)
     public void createSectionWithNameAlreadyExisting() throws IOException {
         final String name = "section1";

@@ -185,7 +185,7 @@ public class Model extends Observable implements FileVisitor<Path> {
      */
     public void moveNote(String currentBookUUID,String currentSectionUUID,String noteUUID,String newNoteBookUUID, String newSectionUUID) throws IOException, AttachmentAlreadyExistException {
         NoteSection newSection = getNoteBookByUUID(newNoteBookUUID).getSectionByUUID(newSectionUUID);
-        getNoteBookByUUID(currentBookUUID).moveNote(currentSectionUUID,noteUUID,newSection);
+        getNoteBookByUUID(currentBookUUID).moveNote(currentSectionUUID,noteUUID,newSection,writer);
     }
 
     public void onExit() {
@@ -212,7 +212,7 @@ public class Model extends Observable implements FileVisitor<Path> {
         }
     }
     public void delNote(String noteBookUUID,String sectionUUID,String noteUUID) throws IOException {
-        getNoteBookByUUID(noteBookUUID).delNote(sectionUUID,noteUUID);
+        getNoteBookByUUID(noteBookUUID).delNote(sectionUUID,noteUUID,writer);
     }
 
     public void delNoteBook(String noteBookUUID) throws IOException {
