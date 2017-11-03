@@ -177,6 +177,21 @@ public class Model extends Observable implements FileVisitor<Path> {
         getNoteBookByUUID(noteSectionRef.getNoteBookRef().getUUID()).changeNoteName(noteSectionRef.getUUID(), noteUUID, text);
     }
 
+
+    /**
+     * move a note from one section of one book to a different section of a different book
+     * @param currentBookUUID
+     * @param currentSectionUUID
+     * @param noteUUID
+     * @param newNoteBookUUID
+     * @param newSectionUUID
+     * @throws IOException
+     */
+    public void moveNote(String currentBookUUID,String currentSectionUUID,String noteUUID,String newNoteBookUUID, String newSectionUUID) throws IOException, AttachmentAlreadyExistException {
+        NoteSection newSection = getNoteBookByUUID(newNoteBookUUID).getSectionByUUID(newSectionUUID);
+        getNoteBookByUUID(currentBookUUID).moveNote(currentSectionUUID,noteUUID,newSection);
+    }
+
     public void onExit() {
         setChanged();
         notifyObservers(new OnExitEvent());
@@ -329,6 +344,45 @@ public class Model extends Observable implements FileVisitor<Path> {
         noteBook.changeName(name);
         setChanged();
         notifyObservers(new NoteBookRenamed(noteBook.getUUID(), noteBook.getName()));
+    }
+
+    /**
+     * delete all the note books associated with current model
+     * @throws IOException
+     */
+    void delete() throws IOException {
+        synchronized (noteBooks) {
+            for (Map.Entry<String,NoteBook> entry : noteBooks.entrySet()) {
+                entry.getValue().delete(writer);
+            }
+            writer.close();
+        }
+        Path indexeDir = this.rootDir.resolve(".indexes");
+        Files.walkFileTree(indexeDir, new FileVisitor<Path>() {
+            @Override
+            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                Files.delete(file);
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                return FileVisitResult.CONTINUE;
+            }
+        });
+
+        Files.delete(indexeDir);
+        Files.delete(rootDir);
     }
 
     private Path rootDir ;

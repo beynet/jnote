@@ -192,6 +192,9 @@ public class NoteBook extends Observable {
     public void addNote(String sectionUUID) throws IOException {
         getSectionByUUID(sectionUUID).addNote();
     }
+    public void adoptNote(String sectionUUID,Note note) throws IOException {
+        getSectionByUUID(sectionUUID).adoptNote(note);
+    }
     public void delNote(NoteRef noteRef) throws IOException {
         NoteSection section = getSectionByUUID(noteRef.getNoteSectionRef().getUUID());
         section.delNote(noteRef.getUUID());
@@ -280,6 +283,16 @@ public class NoteBook extends Observable {
         sectionsMap.remove(ref.getUUID());
         setChanged();
         notifyObservers(new NoteSectionDeleted(ref.getUUID(), true));
+    }
+
+    /**
+     * move the note to the newSection
+     * @param currentSectionUUID
+     * @param noteUUID
+     * @param newSection
+     */
+    public void moveNote(String currentSectionUUID, String noteUUID, NoteSection newSection) throws IOException, AttachmentAlreadyExistException {
+        getSectionByUUID(currentSectionUUID).moveNoteTo(newSection,noteUUID);
     }
 
     private Path path;

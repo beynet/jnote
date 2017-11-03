@@ -24,17 +24,14 @@ import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.URI;
 import java.nio.file.*;
 import java.util.*;
 import java.util.function.Function;
 
 /**
- * A note section is a list of notebook
+ * A note section is a part of a notebook and contains a list of notes
  */
 @XmlRootElement(name = "NoteSection")
 public class NoteSection extends Observable {
@@ -228,7 +225,9 @@ public class NoteSection extends Observable {
     private Note _readNote(String UUID,FileSystem fileSystem) throws IOException,IllegalArgumentException {
         //check if the note exists
         getNoteRefByUUID(UUID);
-
+        return _readNoteNoCheck(UUID,fileSystem);
+    }
+    private Note _readNoteNoCheck(String UUID,FileSystem fileSystem) throws IOException,IllegalArgumentException {
         Path path = fileSystem.getPath(UUID + ".xml");
         InputSource source = new InputSource();
         source.setEncoding("UTF-8");
@@ -250,7 +249,11 @@ public class NoteSection extends Observable {
      * @throws AttachmentAlreadyExistException
      */
     public synchronized void addNoteAttachment(String noteUUID,Path file) throws IOException, AttachmentAlreadyExistException {
-        _addNoteAttachment(noteUUID,file.getFileName().toString(),Files.size(file),false,(destination)->{
+        addNoteAttachment(noteUUID,file,file.getFileName().toString());
+    }
+
+    public synchronized void addNoteAttachment(String noteUUID,Path file,String expectedFileName) throws IOException, AttachmentAlreadyExistException {
+        _addNoteAttachment(noteUUID,expectedFileName,Files.size(file),false,(destination)->{
             try {
                 Files.copy(file,destination);
                 return null;
@@ -385,11 +388,19 @@ public class NoteSection extends Observable {
         try (FileSystem fileSystem = NoteSection.getZipFileSystem(this.getPath(), true)) {
 
             saveSection(fileSystem,marshaller);
+            Note note = _readNoteNoCheck(noteRef.getUUID(), fileSystem);
 
             // deleting the note
             // ****************
             Path notePath = fileSystem.getPath(noteRef.getUUID()+".xml");
             if (Files.exists(notePath)) Files.delete(notePath);
+            for (Attachment attachment : note.getAttachments()) {
+                Path attachFile = fileSystem.getPath(noteRef.getUUID()+"_"+attachment.getName());
+                if (Files.exists(attachFile)) {
+                    logger.debug("deleted file from note "+attachment.getName());
+                    Files.delete(attachFile);
+                }
+            }
         }
     }
 
@@ -440,6 +451,11 @@ public class NoteSection extends Observable {
         addNote(note);
     }
 
+    public synchronized void adoptNote(Note note) throws IOException {
+        addNote(note);
+    }
+
+
     /**
      * remove a note from current section
      * @param noteUUID
@@ -450,6 +466,26 @@ public class NoteSection extends Observable {
         delNoteFromZip(note);
         setChanged();
         notifyObservers(new NoteDeleted(note.getUUID()));
+    }
+
+    public synchronized void moveNoteTo(NoteSection newSection,String noteUUID) throws IOException,AttachmentAlreadyExistException {
+        try (FileSystem fileSystem = NoteSection.getZipFileSystem(this.getPath(), true)) {
+            Note note = _readNote(noteUUID, fileSystem);
+            List<Attachment> attachments = new ArrayList<>();
+            attachments.addAll(note.getAttachments());
+            note.getAttachments().clear();
+            newSection.adoptNote(note);
+            for (Attachment attachment : attachments) {
+                Path attachFile = fileSystem.getPath(noteUUID+"_"+attachment.getName());
+                try {
+                    newSection.addNoteAttachment(noteUUID, attachFile,attachment.getName());
+                }catch(AttachmentAlreadyExistException e) {
+                    newSection.delNote(noteUUID);
+                    throw e;
+                }
+            }
+        }
+        delNote(noteUUID);
     }
 
     public synchronized void delete(IndexWriter writer) throws IOException {
@@ -670,6 +706,9 @@ public class NoteSection extends Observable {
         }
     }
 
+    private synchronized void delete() throws IOException {
+        Files.delete(path);
+    }
 
     private long   modified ;
     private long   created  ;
