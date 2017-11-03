@@ -9,7 +9,6 @@ import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
-import org.beynet.jnote.controler.AttachmentRef;
 import org.beynet.jnote.exceptions.AttachmentAlreadyExistException;
 import org.beynet.jnote.exceptions.AttachmentNotFoundException;
 import org.beynet.jnote.model.events.section.*;
@@ -650,24 +649,24 @@ public class NoteSection extends Observable {
 
     /**
      * remove an attachment from note
-     * @param attachmentRef
+     * @param fileName
+     * @param noteUUID
      * @throws IOException
      * @throws AttachmentNotFoundException
      */
-    public synchronized void deleteAttachment(AttachmentRef attachmentRef) throws IOException, AttachmentNotFoundException {
-        logger.debug("delete attachment name=" + attachmentRef.getFileName() + " from note :" + attachmentRef.getNoteRef().getUUID());
+    public synchronized void deleteAttachment(String fileName,String noteUUID) throws IOException, AttachmentNotFoundException {
+        logger.debug("delete attachment name=" + fileName + " from note :" + noteUUID);
         try (FileSystem fileSystem = NoteSection.getZipFileSystem(this.getPath(), true)) {
-            String noteUUID = attachmentRef.getNoteRef().getUUID();
             NoteRef noteRefByUUID = getNoteRefByUUID(noteUUID);
 
-            Path path = fileSystem.getPath(noteUUID + "_" + attachmentRef.getFileName());
+            Path path = fileSystem.getPath(noteUUID + "_" + fileName);
             if (!Files.exists(path)) {
                 throw new AttachmentNotFoundException();
             }
             Note note = _readNote(noteUUID, fileSystem);
             Attachment removed = null;
             for (Attachment attachment:note.getAttachments()) {
-                if (attachment.getName().equals(attachmentRef.getFileName())) {
+                if (attachment.getName().equals(fileName)) {
                     note.getAttachments().remove(attachment);
                     removed = attachment;
                     break;
@@ -679,17 +678,16 @@ public class NoteSection extends Observable {
         }
     }
 
-    public synchronized void saveAttachment(AttachmentRef attachmentRef, Path destination) throws IOException, AttachmentNotFoundException {
-        logger.debug("save attachment name=" + attachmentRef.getFileName() + " from note :" + attachmentRef.getNoteRef().getUUID());
+    public synchronized void saveAttachment(String filename,String noteUUID, Path destination) throws IOException, AttachmentNotFoundException {
+        logger.debug("save attachment name=" + filename + " from note :" + noteUUID);
         try (FileSystem fileSystem = NoteSection.getZipFileSystem(this.getPath(), false)) {
-            String noteUUID = attachmentRef.getNoteRef().getUUID();
             NoteRef noteRefByUUID = getNoteRefByUUID(noteUUID);
 
-            Path path = fileSystem.getPath(noteUUID + "_" + attachmentRef.getFileName());
+            Path path = fileSystem.getPath(noteUUID + "_" + filename);
             if (!Files.exists(path)) {
                 throw new AttachmentNotFoundException();
             }
-            Files.copy(path,destination.resolve(attachmentRef.getFileName()), StandardCopyOption.REPLACE_EXISTING);
+            Files.copy(path,destination.resolve(filename), StandardCopyOption.REPLACE_EXISTING);
         }
     }
 

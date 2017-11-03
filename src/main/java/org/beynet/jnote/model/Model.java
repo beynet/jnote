@@ -14,10 +14,6 @@ import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopScoreDocCollector;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
-import org.beynet.jnote.controler.AttachmentRef;
-import org.beynet.jnote.controler.NoteBookRef;
-import org.beynet.jnote.controler.NoteRef;
-import org.beynet.jnote.controler.NoteSectionRef;
 import org.beynet.jnote.exceptions.AttachmentAlreadyExistException;
 import org.beynet.jnote.exceptions.AttachmentNotFoundException;
 import org.beynet.jnote.model.events.model.NewNoteBookEvent;
@@ -56,8 +52,8 @@ public class Model extends Observable implements FileVisitor<Path> {
         this.writer = new IndexWriter(dir, iwc);
     }
 
-    public void deleteSection(NoteSectionRef ref) throws IOException {
-        getNoteBookByUUID(ref.getNoteBookRef().getUUID()).deleteSection(ref,writer);
+    public void deleteSection(String noteBookUUID,String sectionUUID) throws IOException {
+        getNoteBookByUUID(noteBookUUID).deleteSection(sectionUUID,writer);
     }
 
     public static Model createInstance(Path rootDir) throws IOException {
@@ -173,8 +169,8 @@ public class Model extends Observable implements FileVisitor<Path> {
     public void changeSectionName(String noteBookUUID, String sectionUUID, String name) throws IOException{
         getNoteBookByUUID(noteBookUUID).changeSectionName(writer,sectionUUID, name);
     }
-    public void changeNoteName(NoteSectionRef noteSectionRef, String noteUUID, String text) throws IOException{
-        getNoteBookByUUID(noteSectionRef.getNoteBookRef().getUUID()).changeNoteName(noteSectionRef.getUUID(), noteUUID, text);
+    public void changeNoteName(String bookUUID,String sectionUUID, String noteUUID, String text) throws IOException{
+        getNoteBookByUUID(bookUUID).changeNoteName(sectionUUID, noteUUID, text);
     }
 
 
@@ -196,8 +192,8 @@ public class Model extends Observable implements FileVisitor<Path> {
         setChanged();
         notifyObservers(new OnExitEvent());
     }
-    public void addNote(NoteSectionRef noteSectionRef) throws IOException {
-        getNoteBookByUUID(noteSectionRef.getNoteBookRef().getUUID()).addNote(noteSectionRef.getUUID());
+    public void addNote(String bookUUID,String sectionUUID) throws IOException {
+        getNoteBookByUUID(bookUUID).addNote(sectionUUID);
     }
 
 
@@ -215,8 +211,8 @@ public class Model extends Observable implements FileVisitor<Path> {
             notifyObservers(new NewNoteBookEvent(noteBook.getUUID(),noteBook.getName()));
         }
     }
-    public void delNote(NoteRef noteRef) throws IOException {
-        getNoteBookByUUID(noteRef.getNoteSectionRef().getNoteBookRef().getUUID()).delNote(noteRef);
+    public void delNote(String noteBookUUID,String sectionUUID,String noteUUID) throws IOException {
+        getNoteBookByUUID(noteBookUUID).delNote(sectionUUID,noteUUID);
     }
 
     public void delNoteBook(String noteBookUUID) throws IOException {
@@ -227,30 +223,30 @@ public class Model extends Observable implements FileVisitor<Path> {
     }
 
 
-    public String getNoteContent(NoteRef noteRef) throws IOException {
-        return getNoteBookByUUID(noteRef.getNoteSectionRef().getNoteBookRef().getUUID()).getNoteContent(noteRef);
+    public String getNoteContent(String bookUUID,String sectionUUID,String noteUUID) throws IOException {
+        return getNoteBookByUUID(bookUUID).getNoteContent(sectionUUID,noteUUID);
     }
 
-    public void addAttachment(NoteRef noteRef, Path path) throws IOException, AttachmentAlreadyExistException {
-        getNoteBookByUUID(noteRef.getNoteSectionRef().getNoteBookRef().getUUID()).addAttachment(noteRef, path);
-    }
-
-
-    public void subscribeToNote(NoteRef noteRef, Observer observer) {
-        getNoteBookByUUID(noteRef.getNoteSectionRef().getNoteBookRef().getUUID()).subscribeToNote(noteRef, observer);
+    public void addAttachment(String bookUUID,String sectionUUID,String noteUUID, Path path) throws IOException, AttachmentAlreadyExistException {
+        getNoteBookByUUID(bookUUID).addAttachment(sectionUUID,noteUUID, path);
     }
 
 
-    public void unSubscribeToNote(NoteRef noteRef, Observer observer) {
-        getNoteBookByUUID(noteRef.getNoteSectionRef().getNoteBookRef().getUUID()).unSubscribeToNote(noteRef, observer);
+    public void subscribeToNote(String bookUUID,String sectionUUID,String noteUUID, Observer observer) {
+        getNoteBookByUUID(bookUUID).subscribeToNote(sectionUUID,noteUUID, observer);
     }
 
 
-    public void deleteAttachment(AttachmentRef attachmentRef) throws IOException, AttachmentNotFoundException {
-        getNoteBookByUUID(attachmentRef.getNoteRef().getNoteSectionRef().getNoteBookRef().getUUID()).deleteAttachment(attachmentRef);
+    public void unSubscribeToNote(String bookUUID,String sectionUUID,String noteUUID, Observer observer) {
+        getNoteBookByUUID(bookUUID).unSubscribeToNote(sectionUUID,noteUUID, observer);
     }
-    public void saveAttachment(AttachmentRef attachmentRef, Path path) throws IOException, AttachmentNotFoundException {
-        getNoteBookByUUID(attachmentRef.getNoteRef().getNoteSectionRef().getNoteBookRef().getUUID()).saveAttachment(attachmentRef, path);
+
+
+    public void deleteAttachment(String fileName,String bookUUID,String sectionUUID,String noteUUID) throws IOException, AttachmentNotFoundException {
+        getNoteBookByUUID(bookUUID).deleteAttachment(fileName,sectionUUID,noteUUID);
+    }
+    public void saveAttachment(String fileName,String bookUUID,String sectionUUID,String noteUUID,Path path) throws IOException, AttachmentNotFoundException {
+        getNoteBookByUUID(bookUUID).saveAttachment(fileName,sectionUUID,noteUUID,path);
     }
 
     /**
@@ -258,8 +254,8 @@ public class Model extends Observable implements FileVisitor<Path> {
      * @return noteref matching the query
      * @throws IOException
      */
-    public List<NoteRef> getMatchingNotes(String query) throws IOException {
-        List<NoteRef> result = new ArrayList<>();
+    public List getMatchingNotes(String query,NoteReferenceFactory constructor) throws IOException {
+        List<Object> result = new ArrayList<>();
         try (IndexReader reader = createReader()) {
             IndexSearcher searcher = new IndexSearcher(reader);
 
@@ -283,15 +279,15 @@ public class Model extends Observable implements FileVisitor<Path> {
             for (int i = 0; i < hits.length; ++i) {
                 int docId = hits[i].doc;
                 Document document = searcher.doc(docId);
-                Optional<NoteRef> noteRef = constructNoteRefFromDocument(document);
+                Optional<Object> noteRef = constructNoteRefFromDocument(document,constructor);
                 noteRef.ifPresent((p)->result.add(p));
             }
             return result;
         }
     }
 
-    private Optional<NoteRef> constructNoteRefFromDocument(Document document) {
-        Optional<NoteRef> result = Optional.empty();
+    private Optional<Object> constructNoteRefFromDocument(Document document,NoteReferenceFactory constructor) {
+        Optional<Object> result = Optional.empty();
         String noteBookName = document.get(LuceneConstants.NOTE_BOOK_NAME);
         String sectionUUID = document.get(LuceneConstants.SECTION_UUID);
         String noteUUID = document.get(LuceneConstants.NOTE_UUID);
@@ -315,9 +311,12 @@ public class Model extends Observable implements FileVisitor<Path> {
 
             }
             if (section!=null) {
+                result=Optional.ofNullable(constructor.constructFromUUIDsAndNames(noteBook.getUUID(),noteBook.getName(),section.getUUID(),section.getName(),noteUUID,noteName));
+                /*
                 NoteBookRef noteBookRef = new NoteBookRef(noteBook.getUUID(),noteBook.getName());
                 NoteSectionRef sectionRef = new NoteSectionRef(noteBookRef,section.getUUID(),section.getName());
-                result=Optional.of(new NoteRef(sectionRef,noteUUID,noteName));
+
+                result=Optional.of(new NoteRef(sectionRef,noteUUID,noteName));*/
             }
         }
         return result;

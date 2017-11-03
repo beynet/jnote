@@ -2,9 +2,6 @@ package org.beynet.jnote.model;
 
 import org.apache.log4j.Logger;
 import org.apache.lucene.index.IndexWriter;
-import org.beynet.jnote.controler.AttachmentRef;
-import org.beynet.jnote.controler.NoteRef;
-import org.beynet.jnote.controler.NoteSectionRef;
 import org.beynet.jnote.exceptions.AttachmentAlreadyExistException;
 import org.beynet.jnote.exceptions.AttachmentNotFoundException;
 import org.beynet.jnote.model.events.notebook.NoteSectionAdded;
@@ -195,9 +192,9 @@ public class NoteBook extends Observable {
     public void adoptNote(String sectionUUID,Note note) throws IOException {
         getSectionByUUID(sectionUUID).adoptNote(note);
     }
-    public void delNote(NoteRef noteRef) throws IOException {
-        NoteSection section = getSectionByUUID(noteRef.getNoteSectionRef().getUUID());
-        section.delNote(noteRef.getUUID());
+    public void delNote(String sectionUUID,String noteUUID) throws IOException {
+        NoteSection section = getSectionByUUID(sectionUUID);
+        section.delNote(noteUUID);
     }
     public void delete(IndexWriter writer) throws IOException {
         synchronized (sectionsMap) {
@@ -214,54 +211,58 @@ public class NoteBook extends Observable {
     }
 
 
-    public String getNoteContent(NoteRef noteRef) throws IOException {
-        return getSectionByUUID(noteRef.getNoteSectionRef().getUUID()).getNoteContent(noteRef.getUUID());
+    public String getNoteContent(String sectionUUID,String noteUUID) throws IOException {
+        return getSectionByUUID(sectionUUID).getNoteContent(noteUUID);
     }
 
 
-    public void addAttachment(NoteRef noteRef, Path path) throws IOException, AttachmentAlreadyExistException {
-        getSectionByUUID(noteRef.getNoteSectionRef().getUUID()).addNoteAttachment(noteRef.getUUID(),path);
+    public void addAttachment(String sectionUUID,String noteUUID, Path path) throws IOException, AttachmentAlreadyExistException {
+        getSectionByUUID(sectionUUID).addNoteAttachment(noteUUID,path);
     }
-
 
     /**
      * subscribe to changes done to a note of the current notebook
-     * @param noteRef the reference of the note
-     * @param observer the new observer
+     * @param sectionUUID
+     * @param noteUUID
+     * @param observer
      */
-    public void subscribeToNote(NoteRef noteRef, Observer observer) {
-        getSectionByUUID(noteRef.getNoteSectionRef().getUUID()).subscribeToNote(noteRef.getUUID(), observer);
+    public void subscribeToNote(String sectionUUID,String noteUUID, Observer observer) {
+        getSectionByUUID(sectionUUID).subscribeToNote(noteUUID, observer);
     }
-
 
     /**
      * unsubscribe to changes done to a note of the current notebook
-     * @param noteRef the reference of the note
-     * @param observer the observer to remove
+     * @param sectionUUID
+     * @param noteUUID
+     * @param observer
      */
-    public void unSubscribeToNote(NoteRef noteRef, Observer observer) {
-        getSectionByUUID(noteRef.getNoteSectionRef().getUUID()).unSubscribeToNote(noteRef.getUUID(), observer);
+    public void unSubscribeToNote(String sectionUUID,String noteUUID, Observer observer) {
+        getSectionByUUID(sectionUUID).unSubscribeToNote(noteUUID, observer);
     }
 
     /**
      * remove an attachment from a note of current notebook
-     * @param attachmentRef
+     * @param fileName
+     * @param sectionUUID
+     * @param noteUUID
      * @throws IOException
      * @throws AttachmentNotFoundException
      */
-    public void deleteAttachment(AttachmentRef attachmentRef) throws IOException, AttachmentNotFoundException {
-        getSectionByUUID(attachmentRef.getNoteRef().getNoteSectionRef().getUUID()).deleteAttachment(attachmentRef);
+    public void deleteAttachment(String fileName,String sectionUUID,String noteUUID) throws IOException, AttachmentNotFoundException {
+        getSectionByUUID(sectionUUID).deleteAttachment(fileName,noteUUID);
     }
 
     /**
-     * save an attachment to a note of the current notebook
-     * @param attachmentRef
+     * save an attachment of a note to the target path
+     * @param fileName
+     * @param sectionUUID
+     * @param noteUUID
      * @param path
      * @throws IOException
      * @throws AttachmentNotFoundException
      */
-    public void saveAttachment(AttachmentRef attachmentRef, Path path) throws IOException, AttachmentNotFoundException {
-        getSectionByUUID(attachmentRef.getNoteRef().getNoteSectionRef().getUUID()).saveAttachment(attachmentRef,path);
+    public void saveAttachment(String fileName,String sectionUUID,String noteUUID, Path path) throws IOException, AttachmentNotFoundException {
+        getSectionByUUID(sectionUUID).saveAttachment(fileName,noteUUID,path);
     }
 
 
@@ -278,11 +279,11 @@ public class NoteBook extends Observable {
             }
         }
     }
-    public void deleteSection(NoteSectionRef ref,IndexWriter writer) throws IOException {
-        getSectionByUUID(ref.getUUID()).delete(writer);
-        sectionsMap.remove(ref.getUUID());
+    public void deleteSection(String sectionUUID,IndexWriter writer) throws IOException {
+        getSectionByUUID(sectionUUID).delete(writer);
+        sectionsMap.remove(sectionUUID);
         setChanged();
-        notifyObservers(new NoteSectionDeleted(ref.getUUID(), true));
+        notifyObservers(new NoteSectionDeleted(sectionUUID, true));
     }
 
     /**

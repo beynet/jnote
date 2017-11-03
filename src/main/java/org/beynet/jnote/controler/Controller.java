@@ -40,10 +40,14 @@ public class Controller {
     }
 
     public static void subscribeToNote(NoteRef noteRef, Observer observer) {
-        Model.getInstance().subscribeToNote(noteRef, observer);
+        NoteSectionRef sectionRef=noteRef.getNoteSectionRef();
+        NoteBookRef noteBookRef = sectionRef.getNoteBookRef();
+        Model.getInstance().subscribeToNote(noteBookRef.getUUID(),sectionRef.getUUID(),noteRef.getUUID(),observer);
     }
     public static void unSubscribeToNote(NoteRef noteRef, Observer observer) {
-        Model.getInstance().unSubscribeToNote(noteRef, observer);
+        NoteSectionRef sectionRef=noteRef.getNoteSectionRef();
+        NoteBookRef noteBookRef = sectionRef.getNoteBookRef();
+        Model.getInstance().unSubscribeToNote(noteBookRef.getUUID(),sectionRef.getUUID(),noteRef.getUUID(), observer);
     }
 
 
@@ -70,11 +74,13 @@ public class Controller {
 
 
     public static void changeNoteName(NoteSectionRef noteSectionRef, String noteUUID, String text)  throws IOException {
-        Model.getInstance().changeNoteName(noteSectionRef, noteUUID, text);
+        NoteBookRef noteBookRef = noteSectionRef.getNoteBookRef();
+        Model.getInstance().changeNoteName(noteBookRef.getUUID(),noteSectionRef.getUUID(),noteUUID,text);
     }
 
     public static void addNote(NoteSectionRef noteSectionRef) throws IOException {
-        Model.getInstance().addNote(noteSectionRef);
+        NoteBookRef noteBookRef = noteSectionRef.getNoteBookRef();
+        Model.getInstance().addNote(noteBookRef.getUUID(),noteSectionRef.getUUID());
     }
 
     public static void addNoteBook(String name) throws IOException{
@@ -82,7 +88,8 @@ public class Controller {
     }
 
     public static void delNote(NoteRef noteRef) throws IOException {
-        Model.getInstance().delNote(noteRef);
+        NoteSectionRef sectionRef=noteRef.getNoteSectionRef();
+        Model.getInstance().delNote(sectionRef.getNoteBookRef().getUUID(),sectionRef.getUUID(),noteRef.getUUID());
     }
 
     public static void delNoteBook(String noteBookUUID) throws IOException {
@@ -90,23 +97,39 @@ public class Controller {
     }
 
     public static String getNoteContent(NoteRef noteRef) throws IOException {
-        return Model.getInstance().getNoteContent(noteRef);
+        NoteSectionRef sectionRef=noteRef.getNoteSectionRef();
+        NoteBookRef noteBookRef = sectionRef.getNoteBookRef();
+        return Model.getInstance().getNoteContent(noteBookRef.getUUID(),sectionRef.getUUID(),noteRef.getUUID());
     }
 
     public static void addAttachment(NoteRef noteRef, Path path) throws IOException, AttachmentAlreadyExistException {
-        Model.getInstance().addAttachment(noteRef, path);
+        NoteSectionRef sectionRef=noteRef.getNoteSectionRef();
+        NoteBookRef noteBookRef = sectionRef.getNoteBookRef();
+        Model.getInstance().addAttachment(noteBookRef.getUUID(),sectionRef.getUUID(),noteRef.getUUID(),path);
     }
 
     public static void deleteAttachment(AttachmentRef attachmentRef) throws IOException, AttachmentNotFoundException {
-        Model.getInstance().deleteAttachment(attachmentRef);
+        NoteRef noteRef = attachmentRef.getNoteRef();
+        NoteSectionRef sectionRef=noteRef.getNoteSectionRef();
+        NoteBookRef noteBookRef = sectionRef.getNoteBookRef();
+        Model.getInstance().deleteAttachment(attachmentRef.getFileName(),noteBookRef.getUUID(),sectionRef.getUUID(),noteRef.getUUID());
     }
 
     public static void saveAttachment(AttachmentRef attachmentRef, Path path) throws IOException, AttachmentNotFoundException {
-        Model.getInstance().saveAttachment(attachmentRef, path);
+        NoteRef noteRef = attachmentRef.getNoteRef();
+        NoteSectionRef sectionRef=noteRef.getNoteSectionRef();
+        NoteBookRef noteBookRef = sectionRef.getNoteBookRef();
+        Model.getInstance().saveAttachment(attachmentRef.getFileName(),noteBookRef.getUUID(),sectionRef.getUUID(),noteRef.getUUID(),path);
     }
 
     public static List<NoteRef> getMatchingNotes(String query) throws IOException {
-        return Model.getInstance().getMatchingNotes(query);
+        List<NoteRef> result = (List<NoteRef>)Model.getInstance().getMatchingNotes(query, (b,bn,s,sn,n,nn)-> {
+                NoteBookRef noteBookRef = new NoteBookRef(b,bn);
+                NoteSectionRef sectionRef = new NoteSectionRef(noteBookRef,s,sn);
+                return new NoteRef(sectionRef,n,nn);
+            }
+        );
+        return result;
     }
 
     public static void reIndexAllNotes() throws IOException {
@@ -118,6 +141,7 @@ public class Controller {
     }
 
     public static void deleteSection(NoteSectionRef ref) throws IOException {
-        Model.getInstance().deleteSection(ref);
+        NoteBookRef noteBookRef = ref.getNoteBookRef();
+        Model.getInstance().deleteSection(noteBookRef.getUUID(),ref.getUUID());
     }
 }

@@ -26,8 +26,10 @@ public class NoteList extends ListView<NoteListItem> {
         ctxMenu = new ContextMenu();
         final MenuItem addNewNote = new MenuItem(I18NHelper.getLabelResourceBundle().getString("addNote"));
         final MenuItem delNote = new MenuItem(I18NHelper.getLabelResourceBundle().getString("delNote"));
+        final MenuItem moveNote = new MenuItem(I18NHelper.getLabelResourceBundle().getString("moveNote"));
         ctxMenu.getItems().add(addNewNote);
         ctxMenu.getItems().add(delNote);
+        ctxMenu.getItems().add(moveNote);
 
         getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             this.oldSelected = oldValue;
@@ -49,8 +51,10 @@ public class NoteList extends ListView<NoteListItem> {
                 if (MouseButton.SECONDARY.equals(event.getButton())) {
                     if (result.isEmpty() == false) {
                         delNote.setDisable(false);
+                        moveNote.setDisable(false);
                     } else {
                         delNote.setDisable(true);
+                        moveNote.setDisable(true);
                     }
                     ctxMenu.show(this, event.getScreenX(), event.getScreenY());
                 } else if (MouseButton.PRIMARY.equals(event.getButton())) {
