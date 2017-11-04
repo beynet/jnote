@@ -38,6 +38,7 @@ public class NoteBook extends TabPane implements Observer ,NoteBookEventVisitor 
     void changeCurrentNoteBook(NoteBookRef currentNoteBook) {
         getTabs().clear();
         getTabs().add(addNoteTab);
+        mySections.clear();
         if (this.currentNoteBook!=null) {
             Controller.unSubscribeToNoteBook(this.currentNoteBook,this);
         }
