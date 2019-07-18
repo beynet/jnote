@@ -28,6 +28,8 @@ import org.beynet.jnote.model.events.note.NoteEvent;
 import org.beynet.jnote.model.events.note.NoteEventVisitor;
 import org.beynet.jnote.utils.Configuration;
 import org.beynet.jnote.utils.I18NHelper;
+import org.beynet.jnote.model.Observer;
+import org.beynet.jnote.model.Observable;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

@@ -7,8 +7,6 @@ import org.beynet.jnote.model.events.note.AttachmentRemovedFromNote;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlType;
 import java.util.List;
-import java.util.Observable;
-import java.util.Observer;
 
 /**
  * Created by beynet on 19/04/2015.
@@ -32,8 +30,8 @@ public class NoteRef  extends Observable {
     }
 
     @Override
-    public synchronized void deleteObserver(Observer o) {
-        super.deleteObserver(o);
+    public synchronized void deleteObserver​(Observer o) {
+        super.deleteObserver​(o);
         logger.debug("delete observer from note UUID=" + getUUID());
     }
 

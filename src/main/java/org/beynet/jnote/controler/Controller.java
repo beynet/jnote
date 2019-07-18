@@ -3,11 +3,11 @@ package org.beynet.jnote.controler;
 import org.beynet.jnote.exceptions.AttachmentAlreadyExistException;
 import org.beynet.jnote.exceptions.AttachmentNotFoundException;
 import org.beynet.jnote.model.Model;
+import org.beynet.jnote.model.Observer;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Observer;
 
 /**
  * Created by beynet on 06/04/2015.

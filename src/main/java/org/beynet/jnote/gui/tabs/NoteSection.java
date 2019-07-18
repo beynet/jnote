@@ -24,8 +24,8 @@ import org.beynet.jnote.utils.I18NHelper;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Observable;
-import java.util.Observer;
+import org.beynet.jnote.model.Observer;
+import org.beynet.jnote.model.Observable;
 
 /**
  * Created by beynet on 05/04/2015.

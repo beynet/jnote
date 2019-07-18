@@ -183,12 +183,12 @@ public class MainApp extends Application {
     }
 
     private void addNewNoteBook() {
-        NoteBookName noteBookNameDialog = new NoteBookName(currentStage, new Double(300), new Double(60));
+        NoteBookName noteBookNameDialog = new NoteBookName(currentStage, Double.valueOf(300), Double.valueOf(60));
         noteBookNameDialog.show();
     }
 
     private void renameNoteBook() {
-        NoteBookName noteBookNameDialog = new NoteBookName(mainPanel.getSelectedNoteBookUUID(),mainPanel.getSelectedNoteBookName(),currentStage, new Double(300), new Double(60));
+        NoteBookName noteBookNameDialog = new NoteBookName(mainPanel.getSelectedNoteBookUUID(),mainPanel.getSelectedNoteBookName(),currentStage, Double.valueOf(300), Double.valueOf(60));
         noteBookNameDialog.show();
     }
 

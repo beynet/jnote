@@ -13,8 +13,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Observable;
-import java.util.Observer;
 
 /**
  * NoteBook : this is mainly a list of {@link NoteSection} contained in a filesystem directory
@@ -65,8 +63,8 @@ public class NoteBook extends Observable {
     }
 
     @Override
-    public synchronized void deleteObserver(Observer o) {
-        super.deleteObserver(o);
+    public synchronized void deleteObserver​(Observer o) {
+        super.deleteObserver​(o);
         logger.debug("delete observer from notebook " + getName());
     }
 

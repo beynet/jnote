@@ -19,11 +19,11 @@ import org.beynet.jnote.gui.Styles;
 import org.beynet.jnote.gui.dialogs.Alert;
 import org.beynet.jnote.model.events.model.*;
 import org.beynet.jnote.utils.I18NHelper;
+import org.beynet.jnote.model.Observer;
+import org.beynet.jnote.model.Observable;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Observable;
-import java.util.Observer;
 
 /**
  * Created by beynet on 07/04/15.

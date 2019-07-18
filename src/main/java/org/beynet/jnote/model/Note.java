@@ -6,8 +6,8 @@ import org.beynet.jnote.model.events.note.AttachmentAddedToNote;
 import javax.xml.bind.annotation.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Observable;
-import java.util.Observer;
+import org.beynet.jnote.model.Observer;
+import org.beynet.jnote.model.Observable;
 
 /**
  * Created by beynet on 07/04/15.
