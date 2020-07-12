@@ -128,6 +128,16 @@ public class JNoteEditor extends HTMLEditor implements Observer,NoteEventVisitor
             });
             topToolbar.getItems().add(copyContent);
 
+ /*           Button insertImage = new Button("IMG");
+            insertImage.setTooltip(new Tooltip(I18NHelper.getLabelResourceBundle().getString("insertImage")));
+            insertImage.setOnAction(event -> {
+                final Clipboard clipboard = Clipboard.getSystemClipboard();
+                final ClipboardContent content = new ClipboardContent();
+                content.putHtml(getHtmlText());
+                clipboard.setContent(content);
+            });
+            topToolbar.getItems().add(insertImage);*/
+
             Button undoButton = new Button("undo");
             undoButton.setTooltip(new Tooltip(I18NHelper.getLabelResourceBundle().getString("undo")));
             undoButton.setOnAction(event -> {
