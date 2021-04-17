@@ -63,8 +63,8 @@ public class NoteBook extends Observable {
     }
 
     @Override
-    public synchronized void deleteObserver​(Observer o) {
-        super.deleteObserver​(o);
+    public synchronized void deleteObserver(Observer o) {
+        super.deleteObserver(o);
         logger.debug("delete observer from notebook " + getName());
     }
 

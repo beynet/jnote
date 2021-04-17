@@ -19,7 +19,7 @@ public class Observable {
         observers.add(obj);
     }
 
-    public synchronized void deleteObserver​(Observer o) {
+    public synchronized void deleteObserver(Observer o) {
         observers.remove(o);
     }
 
