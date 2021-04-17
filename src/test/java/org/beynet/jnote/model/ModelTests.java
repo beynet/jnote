@@ -1,24 +1,20 @@
 package org.beynet.jnote.model;
 
 import org.beynet.jnote.DefaultTest;
-import org.beynet.jnote.controler.AttachmentRef;
 import org.beynet.jnote.exceptions.AttachmentAlreadyExistException;
 import org.beynet.jnote.exceptions.AttachmentNotFoundException;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 import java.util.Map;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.hamcrest.CoreMatchers.nullValue;
-import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Created by beynet on 06/04/2015.
@@ -39,45 +35,79 @@ public class ModelTests extends DefaultTest {
 
 
         NoteSection noteSection2 = NoteSection.fromAbsoluteZipFilePath(testFile);
-        assertThat(noteSection2, is(noteSection));
+        assertEquals(noteSection,noteSection2);
 
         Note note2 = noteSection2.readNote(note.getUUID());
-        assertThat(note2, is(note));
+        assertEquals(note, note2);
     }
 
-    @Test(expected = AttachmentAlreadyExistException.class)
+    //@Test(expected = AttachmentAlreadyExistException.class)
+    @Test
     public void attachmentAlreadyExist() throws IOException, AttachmentAlreadyExistException {
         Path tmpDir = Paths.get(System.getProperty("java.io.tmpdir"));
-        Path testFile = Files.createTempFile(tmpDir, "notesectiontest", ".zip");
-        if (Files.exists(testFile)) Files.delete(testFile);
-        String htmlContent = "<html></html>";
-        NoteSection noteSection = NoteSection.fromAbsoluteZipFilePath(testFile);
-        Note note = new Note();
-        note.setContent(htmlContent);
-        noteSection.addNote(note);
+        Path sectionFile = Files.createTempFile(tmpDir, "notesectiontest", ".zip");
+        Path fileToAttach = Files.createTempFile(tmpDir,"tmpFile",".dat");
+        try {
+            if (Files.exists(sectionFile)) Files.delete(sectionFile);
+            if (Files.exists(fileToAttach)) Files.delete(fileToAttach);
+            Files.write(fileToAttach, "this is the file content. to be written\n\r".getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
+            String htmlContent = "<html></html>";
+            NoteSection noteSection = NoteSection.fromAbsoluteZipFilePath(sectionFile);
+            Note note = new Note();
+            note.setContent(htmlContent);
+            noteSection.addNote(note);
 
-        noteSection.addNoteAttachment(note.getUUID(), "truc.txt", Files.readAllBytes(Paths.get("/etc/passwd")), false);
-        noteSection.addNoteAttachment(note.getUUID(), "truc.txt", Files.readAllBytes(Paths.get("/etc/passwd")), false);
+            noteSection.addNoteAttachment(note.getUUID(), "truc.txt", Files.readAllBytes(fileToAttach), false);
+            assertThrows(AttachmentAlreadyExistException.class, () -> {
+                noteSection.addNoteAttachment(note.getUUID(), "truc.txt", Files.readAllBytes(fileToAttach), false);
+            });
+        }
+        finally {
+            if (Files.exists(sectionFile)) try {
+                Files.delete(sectionFile);
+            }catch(IOException e) {
+
+            }
+            if (Files.exists(fileToAttach)) try {
+                Files.delete(fileToAttach);
+            } catch(IOException e) {
+
+            }
+        }
     }
 
     @Test
-    public void saveAndReadAttachment() throws IOException, AttachmentAlreadyExistException, AttachmentNotFoundException, NoSuchAlgorithmException {
+    public void saveAndReadAttachment() throws IOException, AttachmentAlreadyExistException, AttachmentNotFoundException {
         Path tmpDir = Paths.get(System.getProperty("java.io.tmpdir"));
-        Path testFile = Files.createTempFile(tmpDir, "notesectiontest", ".zip");
-        if (Files.exists(testFile)) Files.delete(testFile);
-        String htmlContent = "<html></html>";
-        NoteSection noteSection = NoteSection.fromAbsoluteZipFilePath(testFile);
-        Note note = new Note();
-        note.setName("note width attachment");
-        note.setContent(htmlContent);
-        noteSection.addNote(note);
+        Path sectionFile = Files.createTempFile(tmpDir, "notesectiontest", ".zip");
+        Path fileToAttach = Files.createTempFile(tmpDir,"tmpFile",".dat");
+        try {
+            if (Files.exists(sectionFile)) Files.delete(sectionFile);
+            Files.write(fileToAttach,"this is the file content. to be written\n\r".getBytes(StandardCharsets.UTF_8),StandardOpenOption.CREATE,StandardOpenOption.WRITE,StandardOpenOption.TRUNCATE_EXISTING);
+            String htmlContent = "<html></html>";
+            NoteSection noteSection = NoteSection.fromAbsoluteZipFilePath(sectionFile);
+            Note note = new Note();
+            note.setName("note width attachment");
+            note.setContent(htmlContent);
+            noteSection.addNote(note);
 
-        String fileName = "truc.txt";
-        byte[] expected = Files.readAllBytes(Paths.get("/etc/passwd"));
-        noteSection.addNoteAttachment(note.getUUID(), fileName, expected, false);
-        byte[] bytes = noteSection.readNoteAttachment(note.getUUID(), fileName);
+            String fileName = "truc.txt";
+            byte[] expected = Files.readAllBytes(fileToAttach);
+            noteSection.addNoteAttachment(note.getUUID(), fileName, expected, false);
+            byte[] bytes = noteSection.readNoteAttachment(note.getUUID(), fileName);
+            assertTrue(Arrays.equals(expected,bytes));
+        } finally {
+            if (Files.exists(sectionFile)) try {
+                Files.delete(sectionFile);
+            }catch(IOException e) {
 
-        assertThat(expected, is(bytes));
+            }
+            if (Files.exists(fileToAttach)) try {
+                Files.delete(fileToAttach);
+            } catch(IOException e) {
+
+            }
+        }
     }
 
     /**
@@ -97,7 +127,7 @@ public class ModelTests extends DefaultTest {
             Files.createDirectories(nb1);
             NoteBook nb = new NoteBook(nb1);
             NoteSection section1 = nb.createNewEmptySection(name);
-            assertThat(section1.getName(), is(name));
+            assertEquals(name,section1.getName());
             Note note1 = new Note();
             note1.setContent("<html><head><title>this is the title</title></head></html>");
             section1.addNote(note1);
@@ -105,21 +135,21 @@ public class ModelTests extends DefaultTest {
             model = new Model(root);
 
             Map<String, NoteBook> noteBooks = model.noteBooks;
-            assertThat(Integer.valueOf(noteBooks.size()), is(Integer.valueOf(1)));
+            assertEquals(Integer.valueOf(1),Integer.valueOf(noteBooks.size()));
 
 
             Map<String, NoteSection> sections = noteBooks.values().iterator().next().sectionsMap;
-            assertThat(Integer.valueOf(sections.size()), is(Integer.valueOf(1)));
+            assertEquals(Integer.valueOf(1),Integer.valueOf(sections.size()));
             NoteSection sectionFound = sections.values().iterator().next();
-            assertThat(sectionFound, is(section1));
-            assertThat(sectionFound.readNote(note1.getUUID()), is(note1));
+            assertEquals(section1,sectionFound);
+            assertEquals(note1,sectionFound.readNote(note1.getUUID()));
         } finally {
             if (model!=null) model.delete();
         }
 
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void createSectionWithNameAlreadyExisting() throws IOException {
         final String name = "section1";
         Path tmpDir = Paths.get(System.getProperty("java.io.tmpdir"));
@@ -128,7 +158,7 @@ public class ModelTests extends DefaultTest {
         Files.createDirectories(nb1);
         NoteBook nb = new NoteBook(nb1);
         nb.createNewEmptySection(name);
-        nb.createNewEmptySection(name);
+        assertThrows(IllegalArgumentException.class,()->nb.createNewEmptySection(name));
     }
 
     @Test
@@ -154,8 +184,8 @@ public class ModelTests extends DefaultTest {
                     book2 = entry.getValue();
                 }
             }
-            assertThat(book1,is(notNullValue()));
-            assertThat(book2,is(notNullValue()));
+            assertNotNull(book1);
+            assertNotNull(book1);
             // create a section in each book
             model.createNewSection(book1.getUUID());
             model.createNewSection(book2.getUUID());
@@ -180,9 +210,9 @@ public class ModelTests extends DefaultTest {
             // add an attachment in the note that will be move - check that the file has been attached correctly
             book1Section1.addNoteAttachment(book1Section1Note1.getUUID(),fileToAttach);
             Note note = book1Section1.readNote(book1Section1Note1.getUUID());
-            assertThat(note.getAttachments().size(),is(1));
-            assertThat(note.getAttachments().get(0).getName(),is(fileToAttach.getFileName().toString()));
-            assertThat(note.getAttachments().get(0).getSize(),is(Files.size(fileToAttach)));
+            assertEquals(1,note.getAttachments().size());
+            assertEquals(fileToAttach.getFileName().toString(),note.getAttachments().get(0).getName());
+            assertEquals(Files.size(fileToAttach),note.getAttachments().get(0).getSize());
 
 
             // move the note from book1 section 1 to book2 section1
@@ -195,11 +225,11 @@ public class ModelTests extends DefaultTest {
                     break;
                 }
             }
-            assertThat(noteFound,is(notNullValue()));
+            assertNotNull(noteFound);
             note = book2Section1.readNote(noteFound.getUUID());
-            assertThat(note.getAttachments().size(),is(1));
-            assertThat(note.getAttachments().get(0).getName(),is(fileToAttach.getFileName().toString()));
-            assertThat(note.getAttachments().get(0).getSize(),is(Files.size(fileToAttach)));
+            assertEquals(1,note.getAttachments().size());
+            assertEquals(fileToAttach.getFileName().toString(),note.getAttachments().get(0).getName());
+            assertEquals(Files.size(fileToAttach),note.getAttachments().get(0).getSize());
 
 
             //book1Section1.set
