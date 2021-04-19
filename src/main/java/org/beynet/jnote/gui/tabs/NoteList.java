@@ -10,6 +10,7 @@ import javafx.stage.Stage;
 import org.beynet.jnote.controler.Controller;
 import org.beynet.jnote.controler.NoteSectionRef;
 import org.beynet.jnote.gui.dialogs.Alert;
+import org.beynet.jnote.gui.dialogs.MoveNote;
 import org.beynet.jnote.utils.I18NHelper;
 
 import java.io.IOException;
@@ -82,6 +83,13 @@ public class NoteList extends ListView<NoteListItem> {
                 Controller.addNote(noteSectionRef);
             } catch (IOException e) {
                 new Alert(currentStage, I18NHelper.getLabelResourceBundle().getString("errorCreatingNote") + e.getMessage(),e).show();
+            }
+        });
+        moveNote.setOnAction(event->{
+            NoteListItem item = getSelectionModel().getSelectedItem();
+            if (item!=null) {
+                MoveNote moveNote1 = new MoveNote(currentStage, Double.valueOf(500), Double.valueOf(200), item.getNoteRef());
+                moveNote1.show();
             }
         });
 

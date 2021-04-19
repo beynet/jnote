@@ -30,4 +30,9 @@ public class NoteSectionRef {
     public String getSectionName() {
         return sectionName;
     }
+
+    @Override
+    public String toString() {
+        return getSectionName();
+    }
 }

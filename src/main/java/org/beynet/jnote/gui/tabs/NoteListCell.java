@@ -1,13 +1,11 @@
 package org.beynet.jnote.gui.tabs;
 
-import javafx.application.Platform;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.TextField;
 import org.apache.log4j.Logger;
 import org.beynet.jnote.controler.Controller;
 import org.beynet.jnote.controler.NoteRef;
 import org.beynet.jnote.gui.TextFieldWithStandardShortcuts;
-import org.beynet.jnote.gui.dialogs.Alert;
 
 import java.io.IOException;
 

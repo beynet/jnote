@@ -1,5 +1,6 @@
 package org.beynet.jnote.model;
 
+import org.apache.log4j.Logger;
 import org.beynet.jnote.DefaultTest;
 import org.beynet.jnote.exceptions.AttachmentAlreadyExistException;
 import org.beynet.jnote.exceptions.AttachmentNotFoundException;
@@ -236,8 +237,14 @@ public class ModelTests extends DefaultTest {
             //model.createNewSection();
         }finally {
             if (model!=null) model.delete();
+            if (fileToAttach!=null) try {
+                Files.delete(fileToAttach);
+            }catch(IOException e){
+                logger.error("unable to delete file",e);
+            }
         }
 
     }
 
+    private final static Logger logger = Logger.getLogger(ModelTests.class);
 }

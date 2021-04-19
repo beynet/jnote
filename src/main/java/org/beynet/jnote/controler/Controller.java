@@ -24,6 +24,9 @@ public class Controller {
     public static void subscribeToModel(Observer observer) {
         Model.getInstance().addObserver(observer);
     }
+    public static void unSubscribeToModel(Observer observer) {
+        Model.getInstance().deleteObserver(observer);
+    }
 
     public static void subscribeToNoteBook(NoteBookRef noteBook,Observer observer) {
         Model.getInstance().subscribeToNoteBook(noteBook.getUUID(), observer);
@@ -143,5 +146,10 @@ public class Controller {
     public static void deleteSection(NoteSectionRef ref) throws IOException {
         NoteBookRef noteBookRef = ref.getNoteBookRef();
         Model.getInstance().deleteSection(noteBookRef.getUUID(),ref.getUUID());
+    }
+
+    public static void moveNote(NoteRef note,NoteSectionRef target) throws IOException, AttachmentAlreadyExistException {
+        Model.getInstance().moveNote(note.getNoteSectionRef().getNoteBookRef().getUUID(),note.getNoteSectionRef().getUUID(),note.getUUID(),
+                target.getNoteBookRef().getUUID(),target.getUUID());
     }
 }
