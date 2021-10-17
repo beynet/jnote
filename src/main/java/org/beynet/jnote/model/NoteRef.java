@@ -1,11 +1,11 @@
 package org.beynet.jnote.model;
 
+import jakarta.xml.bind.annotation.XmlAttribute;
+import jakarta.xml.bind.annotation.XmlType;
 import org.apache.log4j.Logger;
 import org.beynet.jnote.model.events.note.AttachmentAddedToNote;
 import org.beynet.jnote.model.events.note.AttachmentRemovedFromNote;
 
-import javax.xml.bind.annotation.XmlAttribute;
-import javax.xml.bind.annotation.XmlType;
 import java.util.List;
 
 /**

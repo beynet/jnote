@@ -1,13 +1,9 @@
 package org.beynet.jnote.model;
 
-import org.apache.log4j.Logger;
-import org.beynet.jnote.model.events.note.AttachmentAddedToNote;
+import jakarta.xml.bind.annotation.*;
 
-import javax.xml.bind.annotation.*;
 import java.util.ArrayList;
 import java.util.List;
-import org.beynet.jnote.model.Observer;
-import org.beynet.jnote.model.Observable;
 
 /**
  * Created by beynet on 07/04/15.
